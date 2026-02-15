@@ -41,7 +41,7 @@
 
 ## 架构一览
 
-> 核心理解：**频道 = 岗位，Thread = 任务**
+> 核心理解：**频道 = 岗位，Thread = 任务，#hq = Slack hq（headquarters）频道 **
 
 ![OpenCrew Architecture](docs/OpenCrew-Architecture-with-slack.png)
 
