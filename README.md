@@ -47,19 +47,25 @@
 
 OpenCrew 分为三层，每层职责清晰：
 
-**第一层：意图对齐** — 你 + CoS（幕僚长）
-
-你是决策者，只管定方向和验收结果。CoS 是你的战略伙伴——帮你对齐深层目标，你不在时代为推进。CoS 不是网关，你想跟谁聊直接进哪个频道。
-
-**第二层：执行** — CTO / Builder / CIO / Research
-
-CTO 负责拆解和架构，Builder 负责实现，CIO 是领域专家（默认投资方向，可换成法律、营销等任何领域），Research 按需调研。
-
-**第三层：系统维护** — KO + Ops
-
-KO（知识官）从所有产出中提炼可复用知识；Ops（运维官）审计系统变更、防止漂移。这两个不做业务，只维护系统健康。
+| 层级 | 角色 | 职责 |
+|------|------|------|
+| **意图对齐** | 你 + CoS（幕僚长） | 定方向、验收结果。CoS 帮你对齐深层目标，你不在时代为推进。**CoS 不是网关，你想跟谁聊直接进哪个频道。** |
+| **执行** | CTO / Builder / CIO / Research | CTO 拆解架构，Builder 实现，CIO 是可替换的领域专家（投资/法律/营销），Research 按需调研。 |
+| **系统维护** | KO + Ops | KO 从产出中提炼可复用知识；Ops 审计变更、防止漂移。不做业务，只维护系统健康。 |
 
 > 最小可用：CoS + CTO + Builder（3 个 Agent 就能跑起来）。KO/Ops/CIO/Research 按需添加。
+
+### 实际运行效果
+
+<table>
+<tr>
+<td width="33%"><img src="assets/screenshots/mac-1.jpg" alt="多频道协作总览"><br><sub><b>频道 = 岗位</b>：左侧一目了然</sub></td>
+<td width="33%"><img src="assets/screenshots/mac-3.jpg" alt="A2A 派单"><br><sub><b>A2A 派单</b>：CTO → Builder 全程可审计</sub></td>
+<td width="33%"><img src="assets/screenshots/mobile-3.jpg" alt="手机端待办"><br><sub><b>手机端</b>：Unreads = 决策待办</sub></td>
+</tr>
+</table>
+
+> 更多截图 → [截图展示](docs/SCREENSHOTS.md)
 
 ---
 
