@@ -1,6 +1,6 @@
 # OpenCrew - 高效协同、稳定迭代的Openclaw团队
 
-> 给决策者的多智能体操作系统。
+> 适合所有人易上手的多智能体操作系统。
 > 把你的 OpenClaw 变成一支可管理的 AI 团队——领域专家各司其职，经验自动沉淀，Slack 就是你的指挥中心。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
