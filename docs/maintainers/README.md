@@ -1,32 +1,34 @@
-# Maintainers
+# 维护者指南
 
-This folder is for *maintainers* (not required for end-users).
+> 本目录面向维护者，普通用户无需阅读。
 
-Goal: create a repeatable maintenance system that:
-- preserves the original intent and past成果
-- enables stable, incremental iteration
-- minimizes “works on my machine” and copy/paste breakage for non-technical users
-- never leaks secrets or personal identifiers
+## 目标
 
-## Operating principles
+建立一个可重复的维护流程：
+- 保留设计初衷和已有成果
+- 支持稳定的增量迭代
+- 最小化"在我机器上能跑"和复制粘贴导致的问题
+- 默认脱敏：不包含真实 token、ID、用户名或绝对路径
 
-- **Incremental changes only** (small blast radius).
-- **CLI-first verification**: every change should include a way to verify locally.
-- **Compatibility-first**: prefer minimal config snippets over shipping full `openclaw.json`.
-- **Desensitized by default**: no real tokens, IDs, user names, or absolute `/Users/...` paths.
+## 操作原则
 
-## What to update when…
+- **只做增量变更**（控制影响范围）
+- **CLI 优先验证**：每次变更都要能在本地验证
+- **兼容性优先**：用最小配置片段，不提供完整 `openclaw.json`
+- **默认脱敏**：不泄露真实 token、ID、用户名或 `/Users/...` 路径
 
-- Targeting a new OpenClaw version:
-  - Add a new config snippet doc `docs/CONFIG_SNIPPET_<version>.md`.
-  - Keep the old snippet; don’t overwrite it.
-  - Update README to point to the newest snippet.
+## 变更场景
 
-- Changing workflows / shared rules:
-  - Update `shared/*.md` and relevant `workspaces/*/*.md`.
-  - Add a note to `docs/DECISIONS.md`.
+**适配新版 OpenClaw**：
+- 新增配置片段 `docs/CONFIG_SNIPPET_<version>.md`
+- 保留旧版片段，不覆盖
+- 更新 README 指向最新片段
 
-- Publishing a release:
-  - Push to `main` first.
-  - Test deploy on a clean machine/user.
-  - Only then tag (e.g. `v0.1.0`).
+**修改工作流 / shared 协议**：
+- 更新 `shared/*.md` 和相关 `workspaces/*/*.md`
+- 在 `docs/maintainers/DECISIONS.md` 记录决策
+
+**发布版本**：
+- 先推送到 `main`
+- 在全新环境测试部署
+- 确认无误后再打 tag（如 `v0.1.0`）

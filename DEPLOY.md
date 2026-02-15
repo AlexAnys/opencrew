@@ -1,8 +1,8 @@
-# 部署指南（稳妥版）— 让你现有的 OpenClaw 帮你部署 OpenCrew
+# 部署指南（精简版）
 
-> 目标：**不依赖“一键脚本”**、不提供“完整 openclaw.json”，而是用最小增量 + 可回滚的方式，把 OpenCrew 加进你现有的 OpenClaw。
+> **本文适合直接发给你的 OpenClaw，让它代你执行部署。** 完整的人工操作指南（含详细说明、常见报错、验证清单）见 → [完整上手指南](docs/GETTING_STARTED.md)
 >
-> 默认形态：**一个 `.openclaw`、一个 Gateway、多 Agent、多 workspace**（类似你现有 Ali + multi-agent 的关系）。
+> 原则：**不依赖"一键脚本"**、不提供"完整 openclaw.json"，用最小增量 + 可回滚的方式，把 OpenCrew 加进你现有的 OpenClaw。
 
 ---
 

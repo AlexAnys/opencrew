@@ -1,6 +1,8 @@
-# Slack Setup
+> 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **Slack 接入指南** → [配置参考](CONFIG_SNIPPET_2026.2.9.md)
 
-> 目标：用 **一个 Slack App** 连接 OpenClaw，然后用“频道=岗位”绑定多个 Agent；后续增减 Agent 只需要增减频道 + 配置绑定。
+# Slack 接入指南
+
+> 目标：用 **一个 Slack App** 连接 OpenClaw，然后用"频道=岗位"绑定多个 Agent；后续增减 Agent 只需要增减频道 + 配置绑定。
 
 OpenCrew 默认使用 Slack **Socket Mode**（不需要公网 webhook）。
 
@@ -88,14 +90,16 @@ openclaw status
 
 ## Step 5：创建 OpenCrew 频道并邀请 bot
 
-建议先创建 7 个频道（名字可自定义）：
-- #hq（CoS）
-- #cto（CTO）
-- #build（Builder）
-- #invest（CIO，可选）
-- #know（KO）
-- #ops（Ops）
-- #research（Research，可选）
+**最小配置（3 个频道，推荐先从这里开始）：**
+- `#hq`（CoS 幕僚长）
+- `#cto`（CTO 技术合伙人）
+- `#build`（Builder 执行者）
+
+**按需扩展：**
+- `#invest`（CIO 领域专家，可选）
+- `#know`（KO 知识官，可选）
+- `#ops`（Ops 运维官，可选）
+- `#research`（Research 调研员，可选）
 
 然后在每个频道里 `/invite @<你的bot名字>`。
 
@@ -116,5 +120,12 @@ openclaw channels resolve --channel slack "#hq" --json
 
 ---
 
+---
+
 ## 参考
-- OpenClaw Slack 文档（强烈建议收藏）：`/opt/homebrew/lib/node_modules/openclaw/docs/zh-CN/channels/slack.md`
+
+- [OpenClaw Slack 集成文档](https://docs.openclaw.ai/zh-CN/channels/slack)
+
+---
+
+> 📖 下一步 → [完整上手指南](GETTING_STARTED.md) · [配置参考](CONFIG_SNIPPET_2026.2.9.md)

@@ -1,3 +1,5 @@
+> 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → [核心概念](CONCEPTS.md) → [架构设计](ARCHITECTURE.md) → **自定义指南**
+
 # 自定义指南 — 增删改 Agent
 
 ## 添加一个新的领域 Agent
@@ -84,7 +86,7 @@ One-liner: <一句话说清这个角色做什么>
 ### Step 4：重启 OpenClaw
 
 ```bash
-openclaw restart
+openclaw gateway restart
 ```
 
 ---
@@ -171,3 +173,7 @@ workspace 目录可以保留（不影响系统），也可以删除。
 ```
 
 关键模式是一样的：**L1/L2 自主推进，L3（不可逆/对外）必须确认**。
+
+---
+
+> 📖 相关文档 → [核心概念](CONCEPTS.md) · [架构设计](ARCHITECTURE.md) · [配置参考](CONFIG_SNIPPET_2026.2.9.md)

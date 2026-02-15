@@ -1,4 +1,6 @@
-# OpenClaw 2026.2.9 — OpenCrew 最小增量配置（snippet）
+> 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **配置参考**
+
+# OpenClaw 2026.2.9 — OpenCrew 最小增量配置
 
 > 适用：已经在本机安装并能运行 OpenClaw（能执行 `openclaw status`）。
 >

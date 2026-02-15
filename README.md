@@ -1,183 +1,283 @@
 # OpenCrew
 
-> 用 OpenClaw + Slack 搭建一支 AI 团队：**专业分工、可审计协作、稳定迭代**。你负责方向与验收，其余交给团队推进。
+> 给决策者的多智能体操作系统。
+> 把你的 OpenClaw 变成一支可管理的 AI 团队——领域专家各司其职，经验自动沉淀，Slack 就是你的指挥中心。
 
-## Start here
-
-- **Slack 接入（先做这个）** → [`docs/SLACK_SETUP.md`](docs/SLACK_SETUP.md)
-- **部署到本机**（复制 shared/ + workspaces/ + 建软链接）→ [`DEPLOY.md`](DEPLOY.md)
-- **最小增量配置**（OpenClaw 2026.2.9）→ [`docs/CONFIG_SNIPPET_2026.2.9.md`](docs/CONFIG_SNIPPET_2026.2.9.md)
-- **架构与工作方式** → [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- **已知边界 / Workarounds** → [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)
-- **截图** → [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Built on OpenClaw](https://img.shields.io/badge/Built_on-OpenClaw-purple)](https://github.com/openclaw/openclaw)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#参与贡献)
 
 ---
 
-## Quickstart (≈ 10 minutes)
+## 目录
 
-**你需要：**
-- 本机已安装并能运行 OpenClaw：`openclaw status`
-- 一个 Slack workspace（建议新建一套频道给 OpenCrew）
+- [这个项目解决什么问题](#这个项目解决什么问题)
+- [架构一览](#架构一览)
+- [10 分钟上手](#10-分钟上手)
+- [核心概念速览](#核心概念速览)
+- [文档导航](#文档导航)
+- [已稳定 vs 探索中](#已稳定-vs-探索中)
+- [常见问题](#常见问题)
+- [参与贡献](#参与贡献)
+- [开发历程](#开发历程)
 
-### 1) 创建最小频道
+---
 
-创建 3 个频道：`#hq` / `#cto` / `#build`，把你的 bot 邀请进频道（`/invite @<bot>`）。
+## 这个项目解决什么问题
 
-> 可选频道：`#know`（KO）、`#ops`（Ops）、`#invest`（CIO）、`#research`（Research）。
+如果你在用 OpenClaw，你大概率已经遇到了这些问题：
 
-### 2) 连接 Slack → OpenClaw
+| 你的痛点 | 根本原因 | OpenCrew 怎么解 |
+|---------|---------|----------------|
+| 聊着聊着 Agent 变"迟钝"了 | 一个 Agent 承担所有领域，上下文膨胀 | 多个 Agent 各管各的领域，互不污染 |
+| 多项目并行，来回切 session | 没有可视化的任务总览 | Slack 频道=岗位，thread=任务，一目了然 |
+| 每一步都要你确认，累 | Agent 不知道哪些该自主做 | 自主等级机制：可逆操作自动推进，不可逆才找你 |
+| 踩过的坑下次还踩 | 经验散落在聊天记录里 | 三层知识沉淀：对话→结构化总结→可复用知识 |
+| Agent 越用越"跑偏" | 自我调整没人审计 | 专职维护 Agent 负责审计和防漂移 |
 
-按 [`docs/SLACK_SETUP.md`](docs/SLACK_SETUP.md) 创建 Slack App（Socket Mode），然后：
+**一句话总结**：问题不是 OpenClaw 不够强，而是一个 Agent 不够用。你需要的是一支团队。
+
+---
+
+## 架构一览
+
+> 核心理解：**频道 = 岗位，Thread = 任务**
+
+![OpenCrew Architecture](docs/OpenCrew-Architecture-with-slack.png)
+
+OpenCrew 分为三层，每层职责清晰：
+
+**第一层：意图对齐** — 你 + CoS（幕僚长）
+
+你是决策者，只管定方向和验收结果。CoS 是你的战略伙伴——帮你对齐深层目标，你不在时代为推进。CoS 不是网关，你想跟谁聊直接进哪个频道。
+
+**第二层：执行** — CTO / Builder / CIO / Research
+
+CTO 负责拆解和架构，Builder 负责实现，CIO 是领域专家（默认投资方向，可换成法律、营销等任何领域），Research 按需调研。
+
+**第三层：系统维护** — KO + Ops
+
+KO（知识官）从所有产出中提炼可复用知识；Ops（运维官）审计系统变更、防止漂移。这两个不做业务，只维护系统健康。
+
+> 最小可用：CoS + CTO + Builder（3 个 Agent 就能跑起来）。KO/Ops/CIO/Research 按需添加。
+
+---
+
+## 10 分钟上手
+
+> 前提：你已经能正常使用 OpenClaw（`openclaw status` 能跑通），且 Slack 已接入。
+> 如果 Slack 还没接入，先看 → [Slack 接入指南](docs/SLACK_SETUP.md)（约 20 分钟）
+
+### Step 1：创建 Slack 频道
+
+在你的 Slack 工作区创建 3 个频道（最小配置）：
+
+```
+#hq     — CoS 幕僚长
+#cto    — CTO 技术合伙人
+#build  — Builder 执行者
+```
+
+然后把 bot 邀请进去：在每个频道里输入 `/invite @你的bot名`
+
+### Step 2：部署文件
+
+把本仓库的文件放进你的 OpenClaw：
 
 ```bash
-openclaw channels add --channel slack --app-token "xapp-..." --bot-token "xoxb-..."
+# 复制全局协议
+cp -r shared/* ~/.openclaw/shared/
+
+# 复制各 Agent 的 workspace
+for a in cos cto builder; do
+  mkdir -p ~/.openclaw/workspace-$a/memory
+  cp -r workspaces/$a/* ~/.openclaw/workspace-$a/
+  # 让每个 Agent 都能读到全局协议
+  ln -sf ~/.openclaw/shared ~/.openclaw/workspace-$a/shared
+done
+```
+
+> 不想敲命令？把 [DEPLOY.md](DEPLOY.md) 里的部署指令直接发给你现有的 OpenClaw，让它帮你执行。
+
+### Step 3：写入配置并重启
+
+按 [CONFIG_SNIPPET](docs/CONFIG_SNIPPET_2026.2.9.md) 把最小增量合并到 `~/.openclaw/openclaw.json`，然后：
+
+```bash
 openclaw gateway restart
 ```
 
-### 3) 部署 OpenCrew 文件（shared + workspaces + symlink）
+### 验证
 
-按 [`DEPLOY.md`](DEPLOY.md) 把：
-- `shared/*.md` → `~/.openclaw/shared/`
-- `workspaces/<agent>/...` → `~/.openclaw/workspace-<agent>/...`
-- 并推荐创建软链接：`~/.openclaw/workspace-<agent>/shared -> ~/.openclaw/shared`
+在 `#hq` 发一句话 → CoS 回复 ✅
+在 `#cto` 让 CTO 派个任务给 Builder → `#build` 出现 thread，Builder 回复 ✅
 
-### 4) 合并最小增量配置（安全可回滚）
+> 详细的分步指南（含 token 配置、常见报错、验证清单）→ [完整上手指南](docs/GETTING_STARTED.md)
 
-按 [`docs/CONFIG_SNIPPET_2026.2.9.md`](docs/CONFIG_SNIPPET_2026.2.9.md) 把以下内容合并进你的 `~/.openclaw/openclaw.json`：
-- 新增 agents（cos/cto/builder/ko/ops…）
-- Slack bindings（频道=岗位）
-- Slack allowlist（只允许这些频道触发）
-- A2A 保护（allowlist + pingpong 上限）
-- （默认开启）CoS + KO heartbeat（12h）
+---
 
-应用后：
+## 核心概念速览
 
-```bash
-openclaw gateway restart
-openclaw status
+OpenCrew 的运转靠几个关键机制。下面是 30 秒速览，详细说明见 → [核心概念详解](docs/CONCEPTS.md)
+
+**自主等级（Autonomy Ladder）** — Agent 什么时候该自己做，什么时候必须问你
+
+| 等级 | 含义 | 举例 |
+|------|------|------|
+| L0 | 只建议，不动手 | — |
+| L1 | 可逆操作，直接做 | 写草稿、做调研、整理文档 |
+| L2 | 有影响但可回滚，做完汇报 | 提 PR、改配置、写分析 |
+| L3 | 不可逆操作，必须你确认 | 发布、交易、删除、对外发送 |
+
+**任务分类（QAPS）** — 不同类型的任务，不同的处理规范
+
+| 类型 | 含义 | 需要 Closeout？ |
+|------|------|----------------|
+| Q | 一次性问题 | 不需要 |
+| A | 有交付物的小任务 | 需要 |
+| P | 项目（多步骤、跨天） | 需要 + Checkpoint |
+| S | 系统变更 | 需要 + Ops 审计 |
+
+**A2A 两步触发** — Agent 之间怎么协作
+
+因为所有 Agent 共用一个 Slack bot，bot 自己发的消息不会触发自己。所以跨 Agent 协作需要两步：先在目标频道发一条可见消息（锚点），再用 `sessions_send` 真正触发对方。细节见 → [A2A 协议](shared/A2A_PROTOCOL.md)
+
+**三层知识沉淀** — 经验怎么从聊天记录变成组织资产
+
+```
+Layer 0: 原始对话（审计用，不直接复用）
+Layer 1: Closeout（10-15 行结构化总结，压缩比 ~25x）
+Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 ```
 
-### 5) 验证
+---
 
-1) 在 `#cto` 发一句话 → CTO 回复
-2) 在 `#cto` 让 CTO 派一个实现任务给 Builder → `#build` 出现 thread，Builder 在 thread 内回复
+## 文档导航
+
+### 给你（用户）看的
+
+| 文档 | 内容 | 什么时候读 |
+|------|------|-----------|
+| **[完整上手指南](docs/GETTING_STARTED.md)** | 从零到跑通的详细步骤 + 常见问题 | 第一次部署 |
+| **[核心概念详解](docs/CONCEPTS.md)** | 自主等级、QAPS、A2A、知识沉淀的完整说明 | 想深度理解系统 |
+| **[架构设计](docs/ARCHITECTURE.md)** | 三层架构、设计取舍、为什么这么做 | 想理解设计思路 |
+| **[自定义指南](docs/CUSTOMIZATION.md)** | 增删改 Agent、替换领域专家 | 想调整团队配置 |
+| **[已知问题](docs/KNOWN_ISSUES.md)** | 系统的真实边界和当前最佳实践 | 遇到奇怪行为时 |
+| **[开发历程](docs/JOURNEY.md)** | 从一个人的痛点到一支虚拟团队 | 想了解来龙去脉 |
+| **[常见问题](docs/FAQ.md)** | 高频问答 | 快速查疑 |
+
+### 给你的 Agent 看的（部署时 Agent 需要理解的）
+
+| 文档 | 内容 | 谁读 |
+|------|------|------|
+| **[Agent 入职指南](docs/AGENT_ONBOARDING.md)** | Agent 首次启动时应读什么、怎么理解系统 | 新部署的 Agent |
+| **shared/** 目录下所有文件 | 全局协议和模板（Agent 的"员工手册"） | 所有 Agent |
+| 各 workspace 的 SOUL.md / AGENTS.md | 角色定义和工作流 | 对应 Agent |
 
 ---
 
-## What problem does OpenCrew solve?
+## 已稳定 vs 探索中
 
-当你把"开发、投资、生活管理……"都塞进同一个 Agent：
-- profile 会越来越厚，上下文浪费越来越多
-- 意图更容易模糊，Agent 反而变慢
-- 多项目并行时，你需要频繁切换 session，进展难追踪
-- 长对话里有价值经验容易被淹没，系统会漂移且难审计
+### ✅ 已稳定运行
 
-另一个洞察：在长链任务里，**人往往是 loop 中最慢的部分**。AI 可以持续推进，但如果每一步都要人切换 session、分配任务、追踪进展，效率瓶颈仍然在人。
+- 多 Agent 领域分工 + Slack 频道绑定
+- A2A 两步触发（Slack 可见锚点 + sessions_send）
+- Closeout / Checkpoint 强制结构化产物
+- Autonomy Ladder（L0-L3）
+- Ops Review 治理闭环
+- Signal 评分 + KO 知识沉淀
 
-OpenCrew 的核心解法：把"一个万能 Agent"拆成**一支可管理的团队**。
+### 🔄 探索中
 
-| 痛点 | 单 Agent 常见结果 | OpenCrew 的解法 |
-|---|---|---|
-| 上下文膨胀 | 不同领域经验混在一起 | **专业分工**：多个 Agent 各管各的上下文 |
-| 多 Session 切换低效 | 进度分散、难追踪 | **Slack 频道=岗位，thread=任务/session** |
-| 主动性受限 | 小事也要等人 | **自主等级 L0–L3**：可逆操作自动推进 |
-| 信息噪音 | 关键结论沉没 | **结构化产物**：Checkpoint/Closeout |
-| 经验不沉淀 | 踩坑重复发生 | **知识沉淀链路**：记录 → closeout → principles/patterns/scars |
-| 系统漂移 | 改着改着不可信 | **KO + Ops**：沉淀与治理闭环 |
+- 更好的知识系统（跨 session 语义检索）
+- 更轻量的架构（v2-lite：7 Agent → 5，9 个 shared 文件 → 3）
+- Slack root message 独立 session 的更稳定方案
 
 ---
 
-## How it works (mental model)
+## 常见问题
 
-- **Slack 是通信基础设施**
-  - `#channel = 岗位/角色`
-  - `thread = 一次任务的 session（天然隔离上下文）`
-- **OpenClaw 是执行与工具层**
-  - 每个 Agent 对应一个 workspace（自己的记忆、协议、产物）
-- **shared/ 是全系统协议层**
-  - 所有 Agent 共享同一套规则/模板，避免漂移
+**Q：我需要会写代码吗？**
 
-### Key mechanisms
+不需要。OpenCrew 由一个经济学/MBA 背景的非技术用户设计和部署。你需要的是能敲几行命令行——或者直接让你现有的 OpenClaw 帮你执行部署命令。
 
-- **Autonomy Ladder (L0–L3)**：可逆自动推进，不可逆必须确认
-- **Q/A/P/S 分类**：一次性问答 / 交付物 / 项目 / 系统变更（带审计与回滚）
-- **A2A 两步触发**：Slack 可见锚点 + `sessions_send` 真正触发（可审计、可控）
-- **KO / Ops**：把"协作产出"变成"可复用资产"，把"系统变更"变成"可治理演进"
+**Q：最少需要几个 Agent？**
 
----
+3 个：CoS + CTO + Builder。这是最小可用配置。当你发现经验在流失（加 KO）或系统在漂移（加 Ops）时再扩展。
 
-## Architecture
+**Q：和 CrewAI / AutoGen 这些框架有什么区别？**
 
-- 预览图（PNG）：[`docs/OpenCrew-Architecture-with-slack.png`](docs/OpenCrew-Architecture-with-slack.png)
-- 源文件（Excalidraw）：[`docs/OpenCrew-Architecture-with-slack.excalidraw`](docs/OpenCrew-Architecture-with-slack.excalidraw)
+那些是给开发者写代码用的 SDK。OpenCrew 是给决策者管团队用的系统——你通过 Slack 管理 AI 团队，不用写一行代码。它们解决"怎么编排 Agent"，OpenCrew 解决"怎么管理一支 AI 团队"。
 
-![](docs/OpenCrew-Architecture-with-slack.png)
+**Q：不用 Slack 行不行？**
 
-> 最小可用：CoS + CTO + Builder。
+目前 Slack 是主要界面。架构设计围绕"频道=岗位、thread=任务"展开，Slack 的特性（thread 隔离、Unreads、手机端）天然匹配。其他平台在 roadmap 上。
 
-### 三层架构
+**Q：会不会消耗很多 token？**
 
-**深度意图对齐层 — YOU + CoS**
+会比单 Agent 多，因为每个 Agent 有独立上下文。但 Closeout 机制（25x 压缩比）和领域隔离（每个 Agent 只看自己领域的信息）实际上让单次对话的 token 消耗更少。总量增加，但每个 Agent 的效率更高。
 
-你是决策者，定方向、验收结果。CoS（幕僚长）跟你对齐深层目标和价值判断，在你不方便时代为你推进任务。
+**Q：Slack 免费版够用吗？**
 
-> CoS **不是网关、不必经**。你想聊技术直接进 #cto，想聊投资直接进 #invest。
+够用。OpenCrew 使用的 Slack API（Socket Mode）在免费版中完全可用。唯一限制是消息历史保留 90 天，但重要信息已经通过 Closeout 和知识库沉淀了。
 
-**执行层 — CTO / CIO / Builder / Research**
-
-CTO 负责技术架构和拆解，Builder 负责具体实现（通常由 CTO 指派）。CIO 是领域专家（默认投资方向，可替换为任何领域）。Research 按需 spawn。
-
-**系统维护层 — KO + Ops**
-
-KO 从 closeout 中提炼可复用知识；Ops 审计系统变更、防漂移。
+更多问答 → [FAQ](docs/FAQ.md)
 
 ---
 
-## Repository layout
+## 参与贡献
 
-```text
+欢迎提 Issue / PR，尤其欢迎：
+
+- 多 Agent 协作架构的改进建议
+- 知识系统（检索/索引/记忆）的实践经验
+- Slack thread / session 的稳定性优化思路
+- 非 Slack 平台（Discord / Telegram / 飞书）的适配方案
+- 文档翻译（英文版 README 在计划中）
+
+---
+
+## 开发历程
+
+这个项目由一个经济学/MBA 背景、非技术出身的 OpenClaw 用户独立开发。
+
+从最初发现"一个 Agent 承担所有领域时上下文会膨胀"，到设计出 7 个 Agent 的协作架构，再到解决 A2A 循环风暴、deliveryContext 漂移等一系列技术挑战——完整的踩坑记录和设计决策见 → [开发历程](docs/JOURNEY.md)
+
+**为什么现在开源？** 系统已经在真实使用中跑通并稳定迭代，但仍有未完全解决的边界问题。与其等到"完美"，不如先把可用框架公开，让更多使用者一起反馈、共建、进化。
+
+---
+
+## 目录结构
+
+```
 opencrew/
-├── README.md
-├── DEPLOY.md
-├── shared/                      # 全系统协议与模板（所有 Agent 共享）
-├── workspaces/                  # 各 Agent 工作空间（SOUL/AGENTS/MEMORY/...）
-├── docs/                        # 安装、配置、架构、已知边界
-├── patches/                     # 高级：可选 workaround（默认不需要）
-├── assets/                      # 图片/架构图/截图（请避免泄露隐私）
-└── v2-lite/                     # 精简版探索（实验性）
+├── README.md                         ← 你在这里
+├── DEPLOY.md                         ← 部署指南（精简版）
+├── LICENSE                           ← MIT
+├── shared/                           ← 全局协议和模板（所有 Agent 共享）
+├── workspaces/                       ← 每个 Agent 的工作空间
+├── docs/
+│   ├── GETTING_STARTED.md            ← 完整上手指南
+│   ├── CONCEPTS.md                   ← 核心概念详解
+│   ├── ARCHITECTURE.md               ← 架构设计
+│   ├── CUSTOMIZATION.md              ← 自定义指南
+│   ├── AGENT_ONBOARDING.md           ← Agent 入职指南（给 Agent 读的）
+│   ├── FAQ.md                        ← 常见问题
+│   ├── KNOWN_ISSUES.md               ← 已知问题
+│   ├── JOURNEY.md                    ← 开发历程
+│   ├── SLACK_SETUP.md                ← Slack App 创建指南
+│   └── CONFIG_SNIPPET_2026.2.9.md    ← 最小增量配置
+├── patches/                          ← 高级 workaround（不推荐新手）
+└── v2-lite/                          ← 精简版探索方向（实验性）
 ```
 
 ---
 
-## Why open source now?
+## 相关资源
 
-OpenCrew 的起点很简单：**当一个 Agent 同时承担太多领域时，profile 不断膨胀**，上下文浪费变多、意图变模糊，Agent 反而更"迟钝"。
-
-我们选择的不是"更强的单体 Agent"，而是一支**可管理的 AI 团队**：每个 Agent 专注自己的领域，用户只做方向与验收；协作过程在 Slack 上显性可审计，靠结构化产物沉淀可复用经验。
-
-这次开源刻意选择 **"轻量但完整"**：
-- ✅ **提供**：可运行的多 Agent 协作骨架（Slack=岗位、thread=任务、shared 机制、QAPS、L0-L3、Closeout/Checkpoint、KO/Ops 沉淀与治理）
-- ❌ **不提供**：个性化偏好硬编码、真实 token/ID（你按自己情况改）
-
-系统已经在真实使用中跑通并稳定迭代，但仍有边界问题需要在实践中打磨（例如 Slack root message 的 session 隔离、更好的跨 session 知识召回）。与其等"完美"，不如先把可用框架公开，一起反馈、共建、进化。
-
----
-
-## Related resources
-
-- OpenClaw Docs（Slack）：https://docs.openclaw.ai/zh-CN/channels/slack
-- OpenClaw Docs（Heartbeat）：https://docs.openclaw.ai/zh-CN/gateway/heartbeat
-
----
-
-## Contributing
-
-欢迎提 Issue / PR。建议每次改动都附：
-- 变更目的（why）
-- 验证方式（how to verify）
-- 回滚方式（rollback）
-
-（维护者参考：[`docs/DECISIONS.md`](docs/DECISIONS.md)、`CHANGELOG.md`、`docs/maintainers/`）
+- [OpenClaw 官方文档](https://docs.openclaw.ai/)
+- [OpenClaw Slack 集成文档](https://docs.openclaw.ai/zh-CN/channels/slack)
+- [OpenClaw Heartbeat 文档](https://docs.openclaw.ai/zh-CN/gateway/heartbeat)
 
 ---
 
