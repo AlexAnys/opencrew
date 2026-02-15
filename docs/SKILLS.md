@@ -1,4 +1,4 @@
-# Skills（OpenClaw 能力包）— 给非技术用户的最短解释
+# Skills（OpenClaw 能力包）
 
 ## 结论
 - 你**不需要**在 OpenCrew 的 workspace 里创建 `skills/` 文件夹。

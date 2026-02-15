@@ -1,6 +1,6 @@
 # OpenClaw 2026.2.9 — OpenCrew 最小增量配置（snippet）
 
-> 目标用户：**非技术背景**，但已经在本机安装并能运行 OpenClaw。
+> 适用：已经在本机安装并能运行 OpenClaw（能执行 `openclaw status`）。
 >
 > 原则：
 > - 不提供“完整 openclaw.json”（避免误覆盖 `auth/models/gateway`）

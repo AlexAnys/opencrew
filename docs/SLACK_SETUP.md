@@ -1,4 +1,4 @@
-# Slack Setup（面向非技术用户）
+# Slack Setup
 
 > 目标：用 **一个 Slack App** 连接 OpenClaw，然后用“频道=岗位”绑定多个 Agent；后续增减 Agent 只需要增减频道 + 配置绑定。
 

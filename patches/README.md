@@ -2,7 +2,7 @@
 
 这里放的是一些 **高级 workaround / 思路验证**。
 
-> 面向非技术用户的开源默认路径：**不依赖 patches**。请先用 thread 工作法（见 `docs/KNOWN_ISSUES.md`）。
+> 开源默认路径：**不依赖 patches**。请先用 thread 工作法（见 `docs/KNOWN_ISSUES.md`）。
 
 ---
 
