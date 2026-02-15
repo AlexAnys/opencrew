@@ -59,9 +59,9 @@ OpenCrew 分为三层，每层职责清晰：
 
 <table>
 <tr>
-<td width="33%"><img src="assets/screenshots/mac-1.jpg" alt="多频道协作总览"><br><sub><b>频道 = 岗位</b>：左侧一目了然</sub></td>
-<td width="33%"><img src="assets/screenshots/mac-3.jpg" alt="A2A 派单"><br><sub><b>A2A 派单</b>：CTO → Builder 全程可审计</sub></td>
-<td width="33%"><img src="assets/screenshots/mobile-3.jpg" alt="手机端待办"><br><sub><b>手机端</b>：Unreads = 决策待办</sub></td>
+<td width="33%"><img src="assets/screenshots/mac-1.jpg" alt="多频道协作总览"><br><sub><b>多频道协作总览</b>：频道=岗位，帖子=session</sub></td>
+<td width="33%"><img src="assets/screenshots/mac-4-search.jpg" alt="Slack 搜索"><br><sub><b>Slack 搜索</b>：跨对话或指定频道快速搜索</sub></td>
+<td width="33%"><img src="assets/screenshots/mobile-1.jpg" alt="未读列表（移动端）"><br><sub><b>未读列表</b>：高效处理未读信息（A2A 指派）</sub></td>
 </tr>
 </table>
 
