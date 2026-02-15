@@ -1,3 +1,5 @@
+**中文** | [English](README.en.md)
+
 # OpenCrew - 高效协同、稳定迭代的Openclaw团队
 
 > 适合所有人易上手的多智能体操作系统。
@@ -239,7 +241,7 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 - 知识系统（检索/索引/记忆）的实践经验
 - Slack thread / session 的稳定性优化思路
 - 非 Slack 平台（Discord / Telegram / 飞书）的适配方案
-- 文档翻译（英文版 README 在计划中）
+- 英文文档的改进与扩展（[English docs](README.en.md) 已可用）
 
 ---
 

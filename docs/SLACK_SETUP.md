@@ -1,3 +1,5 @@
+**中文** | [English](en/SLACK_SETUP.md)
+
 > 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **Slack 接入指南** → [配置参考](CONFIG_SNIPPET_2026.2.9.md)
 
 # Slack 接入指南

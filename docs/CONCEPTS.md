@@ -1,3 +1,5 @@
+**中文** | [English](en/CONCEPTS.md)
+
 > 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **核心概念** → [架构设计](ARCHITECTURE.md) → [自定义](CUSTOMIZATION.md)
 
 # 核心概念详解

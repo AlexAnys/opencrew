@@ -1,3 +1,5 @@
+**中文** | [English](en/FAQ.md)
+
 > 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → [核心概念](CONCEPTS.md) → **FAQ**
 
 # 常见问题

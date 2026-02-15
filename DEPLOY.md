@@ -1,3 +1,5 @@
+**中文** | [English](DEPLOY.en.md)
+
 # 部署指南（精简版）
 
 > **本文适合直接发给你的 OpenClaw，让它代你执行部署。** 完整的人工操作指南（含详细说明、常见报错、验证清单）见 → [完整上手指南](docs/GETTING_STARTED.md)

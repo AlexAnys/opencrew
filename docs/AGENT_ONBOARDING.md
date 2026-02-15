@@ -1,3 +1,5 @@
+**中文** | [English](en/AGENT_ONBOARDING.md)
+
 # Agent 入职指南 — 给 AI Agent 读的系统理解文档
 
 > **这个文档的读者是 Agent，不是人。**

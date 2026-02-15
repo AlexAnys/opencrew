@@ -1,3 +1,5 @@
+**中文** | [English](en/GETTING_STARTED.md)
+
 > 📖 [README](../README.md) → **完整上手指南** → [核心概念](CONCEPTS.md) → [架构设计](ARCHITECTURE.md) → [自定义](CUSTOMIZATION.md)
 
 # 完整上手指南 — 从零到多 Agent 协作跑通

@@ -1,3 +1,5 @@
+**中文** | [English](en/KNOWN_ISSUES.md)
+
 > 📖 [README](../README.md) → [核心概念](CONCEPTS.md) → [架构设计](ARCHITECTURE.md) → **已知问题**
 
 # 已知问题与当前最佳实践

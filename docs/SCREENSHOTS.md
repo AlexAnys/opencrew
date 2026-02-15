@@ -1,3 +1,5 @@
+**中文** | [English](en/SCREENSHOTS.md)
+
 > 📖 [README](../README.md) → **截图**
 
 # 截图展示

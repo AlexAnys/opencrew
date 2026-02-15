@@ -1,3 +1,5 @@
+**中文** | [English](en/JOURNEY.md)
+
 > 📖 [README](../README.md) → **开发历程**
 
 # 开发历程 — 从一个人的痛点到一支虚拟团队

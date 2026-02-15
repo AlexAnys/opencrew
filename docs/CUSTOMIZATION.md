@@ -1,3 +1,5 @@
+**中文** | [English](en/CUSTOMIZATION.md)
+
 > 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → [核心概念](CONCEPTS.md) → [架构设计](ARCHITECTURE.md) → **自定义指南**
 
 # 自定义指南 — 增删改 Agent

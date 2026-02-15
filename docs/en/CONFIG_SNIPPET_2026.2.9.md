@@ -1,19 +1,17 @@
-**中文** | [English](en/CONFIG_SNIPPET_2026.2.9.md)
+[中文](../CONFIG_SNIPPET_2026.2.9.md) | **English**
 
-> 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **配置参考**
+# OpenClaw 2026.2.9 -- OpenCrew Minimal Incremental Config (snippet)
 
-# OpenClaw 2026.2.9 — OpenCrew 最小增量配置
-
-> 适用：已经在本机安装并能运行 OpenClaw（能执行 `openclaw status`）。
+> Prerequisite: You already have OpenClaw installed locally and it runs successfully (you can execute `openclaw status`).
 >
-> 原则：
-> - 不提供“完整 openclaw.json”（避免误覆盖 `auth/models/gateway`）
-> - 只提供 **最小增量**：新增 Agents + Slack 频道绑定 + A2A 限制
-> - 可回滚：删除我们新增的片段 + 删除新建的 workspace 目录
+> Principles:
+> - We do **not** provide a "complete openclaw.json" (to avoid accidentally overwriting your `auth/models/gateway` settings)
+> - We only provide the **minimal incremental changes**: new Agents + Slack channel bindings + A2A restrictions
+> - Fully reversible: just remove the snippets we added and delete the new workspace directories
 
 ---
 
-## 改之前先做备份（强烈建议）
+## Back up first (strongly recommended)
 
 ```bash
 cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S)
@@ -21,30 +19,30 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
 
 ---
 
-## 你需要准备的占位符
+## Placeholders you need to prepare
 
-- Slack Channel IDs：
-  - `<SLACK_CHANNEL_ID_HQ>`（#hq）
-  - `<SLACK_CHANNEL_ID_CTO>`（#cto）
-  - `<SLACK_CHANNEL_ID_BUILD>`（#build）
-  - `<SLACK_CHANNEL_ID_INVEST>`（#invest，可选）
-  - `<SLACK_CHANNEL_ID_KNOW>`（#know）
-  - `<SLACK_CHANNEL_ID_OPS>`（#ops）
-  - `<SLACK_CHANNEL_ID_RESEARCH>`（#research，可选）
+- Slack Channel IDs:
+  - `<SLACK_CHANNEL_ID_HQ>` (#hq)
+  - `<SLACK_CHANNEL_ID_CTO>` (#cto)
+  - `<SLACK_CHANNEL_ID_BUILD>` (#build)
+  - `<SLACK_CHANNEL_ID_INVEST>` (#invest, optional)
+  - `<SLACK_CHANNEL_ID_KNOW>` (#know)
+  - `<SLACK_CHANNEL_ID_OPS>` (#ops)
+  - `<SLACK_CHANNEL_ID_RESEARCH>` (#research, optional)
 
-获取方法见：[`docs/SLACK_SETUP.md`](./SLACK_SETUP.md)
+See [docs/SLACK_SETUP.md](./SLACK_SETUP.md) for how to obtain them.
 
 ---
 
-## 需要加到 `~/.openclaw/openclaw.json` 的最小增量
+## Minimal incremental changes to add to `~/.openclaw/openclaw.json`
 
-> 说明：以下片段假设你已经有自己的 `openclaw.json`。你只需要把这些**新增项**合并进去即可。
+> Note: The snippets below assume you already have your own `openclaw.json`. You only need to **merge these new entries** into it.
 >
-> 如果你已经有同名 agent id（例如已存在 `cos`/`cto`），请改成不冲突的 id（例如 `crew-cos`），并同步修改 bindings。
+> If you already have an agent with a conflicting id (e.g., you already have `cos` or `cto`), rename the new one to something unique (e.g., `crew-cos`) and update the bindings to match.
 
-### A) 新增 Agents（`agents.list`）
+### A) New Agents (`agents.list`)
 
-把这些 agent 追加到你现有的 `agents.list` 里（不要删除你原来的 `main`）：
+Append these agents to your existing `agents.list` (do not remove your original `main` agent):
 
 ```json
 {
@@ -99,7 +97,7 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
 }
 ```
 
-### B) A2A / 子智能体保护（`tools` + `session`）
+### B) A2A / Sub-agent protection (`tools` + `session`)
 
 ```json
 {
@@ -113,7 +111,7 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
 }
 ```
 
-### C) Slack 频道绑定（`bindings`）
+### C) Slack channel bindings (`bindings`)
 
 ```json
 {
@@ -129,7 +127,7 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
 }
 ```
 
-### D) Slack allowlist + thread 隔离（`channels.slack`）
+### D) Slack allowlist + thread isolation (`channels.slack`)
 
 ```json
 {
@@ -152,11 +150,11 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
 }
 ```
 
-### 可选：开启 @mention gate（降噪；建议你跑通后再开）
+### Optional: Enable @mention gate (noise reduction -- recommended after you have everything working)
 
-开源版默认把 `#know` / `#ops` 设为 `requireMention: false`，优先保证“照着做就能跑起来”。
+The open-source defaults set `#know` and `#ops` to `requireMention: false` to make sure things work out of the box.
 
-如果你希望它们更安静（只在你显式 @mention 时才触发），把下面两项改成 `true`：
+If you want those channels to be quieter (only responding when you explicitly @mention the bot), change these two entries to `true`:
 
 ```json
 {
@@ -171,34 +169,34 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
 }
 ```
 
-### E) Heartbeat（推荐默认开启：本 snippet 已为 CoS/KO 开启）
+### E) Heartbeat (recommended -- this snippet already enables it for CoS and KO)
 
-很多人以为“有了 `HEARTBEAT.md` 文件就会自动跑心跳”，但 **心跳是否运行由 `openclaw.json` 决定**。
+A common misconception is that having a `HEARTBEAT.md` file is enough to run heartbeats. In reality, **heartbeat behavior is controlled by `openclaw.json`**.
 
-在上面的 `agents.list` 示例里，我们已经为 `cos` / `ko` 加了：
-- `heartbeat.every = "12h"`（≈每天 2 次）
+In the `agents.list` example above, we already added heartbeat config for `cos` and `ko`:
+- `heartbeat.every = "12h"` (roughly twice a day)
 - `heartbeat.target = "slack"` + `to = "channel:<...>"`
 
-> 重要规则（来自 OpenClaw 文档）：
-> 如果 `agents.list[]` 里**任何一个** agent 配了 `heartbeat` 块，那么**只有**配置了 `heartbeat` 的 agents 才会运行心跳。
-> 因此：如果你原本依赖 `agents.defaults.heartbeat` 跑“全局心跳”，引入 per-agent heartbeat 后行为会变化。
+> Important rule (from the OpenClaw docs):
+> If **any** agent in `agents.list[]` has a `heartbeat` block, then **only** agents with an explicit `heartbeat` block will run heartbeats.
+> This means: if you previously relied on `agents.defaults.heartbeat` for a "global heartbeat", introducing per-agent heartbeat configs will change that behavior.
 
-如果你不想让 CoS/KO 运行心跳：删除这两个 agent 条目中的 `heartbeat` 块即可。
-验证心跳是否在跑：
+If you do not want CoS/KO to run heartbeats, simply remove the `heartbeat` block from those two agent entries.
+
+To check whether heartbeats are running:
 
 ```bash
 openclaw system heartbeat last
-# 需要时可手动启用/禁用
+# Manually enable/disable as needed
 openclaw system heartbeat enable
 openclaw system heartbeat disable
 ```
 
-> 如果你想“固定每天 09:00/21:00 准时触发”，更适合用 cron；heartbeat 更适合“间隔型、自检型”。
+> If you want heartbeats to fire at fixed times (e.g., every day at 09:00 and 21:00), a cron job is a better fit. The built-in heartbeat is designed for interval-based, self-check style triggers.
 
-### F) 工作区目录准备（强烈建议）
+### F) Prepare workspace directories (strongly recommended)
 
-OpenCrew 的工作流会用到一些子目录（用于 daily memory、KO inbox/knowledge、CTO scars/patterns）。
-建议先创建（不会影响你现有配置）：
+OpenCrew workflows use several subdirectories (for daily memory, KO inbox/knowledge, CTO scars/patterns). Create them ahead of time -- this will not affect your existing configuration:
 
 ```bash
 mkdir -p ~/.openclaw/workspace-{cos,cto,builder,cio,ko,ops,research}/memory
@@ -208,33 +206,32 @@ mkdir -p ~/.openclaw/workspace-cto/{scars,patterns}
 
 ---
 
-## 应用后：重启 + 验证
+## After applying: restart and verify
 
 ```bash
 openclaw gateway restart
 openclaw status
 ```
 
-验证建议：
-1) 在 #cto 发消息 → CTO 应答
-2) 让 CTO 在 #build 新开 thread 派给 Builder（两步 A2A）→ Builder 在 thread 内回复
+Verification checklist:
+1. Post a message in #cto -- the CTO agent should respond
+2. Have CTO open a new thread in #build and delegate to Builder (a two-step A2A flow) -- Builder should reply within the thread
 
 ---
 
-## 回滚方式（很重要）
+## How to roll back (important)
 
-1) 直接恢复备份：
+1. Restore from backup:
 
 ```bash
 cp ~/.openclaw/openclaw.json.bak.<timestamp> ~/.openclaw/openclaw.json
 openclaw gateway restart
 ```
 
-2) 或手动回滚：
-- 从 `openclaw.json` 删除本文件中新增的：
-  - `agents.list` 里新增的 OpenCrew agents
-  - `bindings` 新增条目
-  - `channels.slack.channels` 的 allowlist 条目
-  - `tools.agentToAgent` / `session.agentToAgent` 的增量
-- （可选）删除新建目录：`~/.openclaw/workspace-{cos,cto,builder,cio,ko,ops,research}`
-
+2. Or roll back manually:
+- Remove the following entries that this snippet added to `openclaw.json`:
+  - The new OpenCrew agents in `agents.list`
+  - The new `bindings` entries
+  - The `channels.slack.channels` allowlist entries
+  - The `tools.agentToAgent` / `session.agentToAgent` additions
+- (Optional) Delete the new workspace directories: `~/.openclaw/workspace-{cos,cto,builder,cio,ko,ops,research}`
