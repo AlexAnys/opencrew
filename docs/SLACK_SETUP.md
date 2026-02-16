@@ -43,7 +43,7 @@ OpenCrew 默认使用 Slack **Socket Mode**（不需要公网 webhook）。
 - `reactions:read`, `reactions:write`
 - `pins:read`, `pins:write`
 - `emoji:read`
-- `files:write`
+- `files:write` `files:read`
 
 然后点击 **Install to Workspace**，复制 **Bot User OAuth Token**（`xoxb-...`）。
 
@@ -60,6 +60,7 @@ OpenCrew 默认使用 Slack **Socket Mode**（不需要公网 webhook）。
 - `channel_rename`
 - `pin_added`, `pin_removed`
 
+在 **Install App** 重新加载应用，获得bot-token (App-token在 **Basic Information** 中的 App-Level Tokens 里) 
 ---
 
 ## Step 4：把 Slack 账号接入 OpenClaw（推荐用 CLI 写入配置）
