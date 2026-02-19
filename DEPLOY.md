@@ -34,29 +34,83 @@
 
 ---
 
+## 给 OpenClaw 的执行提示
+
+> 以下信息面向执行部署的 OpenClaw Agent。如果你是人工阅读，可跳过这一节。
+
+当用户让你部署 OpenCrew 时，按以下流程执行：
+
+### 执行流程
+
+```
+Step 1: 备份
+  cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%s)
+
+Step 2: 复制文件（见下方"方式 B"的 bash 命令，照搬即可）
+  - shared/*.md → ~/.openclaw/shared/
+  - workspaces/<agent>/ → ~/.openclaw/workspace-<agent>/（不覆盖已有文件）
+  - 为每个 workspace 创建软链接：shared → ~/.openclaw/shared
+  - 创建子目录：memory/, ko/inbox, ko/knowledge, cto/scars, cto/patterns
+
+Step 3: 获取 Slack Channel ID
+  用户已提供 Bot Token。用 Slack API 自动获取（不需要让用户手动复制）：
+  curl -s -H "Authorization: Bearer <botToken>" \
+    "https://slack.com/api/conversations.list?types=public_channel&limit=200"
+  从返回的 channels 里匹配 is_member=true 的频道名，拿到 Channel ID。
+  用户告诉你"#hq → CoS"时，找到 name=hq 的频道即可。
+
+Step 4: 写入 Slack 配置
+  把 botToken 和 appToken 写入 channels.slack（Socket Mode）。
+
+Step 5: 合并 Agent 配置
+  读本仓库的 docs/CONFIG_SNIPPET_2026.2.9.md，按其结构把以下增量合并到 openclaw.json：
+  - agents.list（新增 Agent 条目，保留用户原有的 main agent）
+  - bindings（Channel ID → Agent 映射）
+  - channels.slack.channels（allowlist + requireMention）
+  - tools.agentToAgent + session.agentToAgent（A2A 保护）
+  - channels.slack.thread（thread 隔离）
+
+Step 6: 重启并验证
+  openclaw gateway restart
+  openclaw status（确认 Agent 数量和 Slack 状态正常）
+```
+
+### 边界（不要做的事）
+
+- **不要修改**用户的 `models` / `auth` / `gateway` 相关配置
+- **不要删除**用户已有的 agents、bindings 或 channels 条目
+- 遇到冲突（如用户已有同名 agent id）先停下来问用户
+
+---
+
 ## 2. 把 OpenCrew 文件放进你的 `~/.openclaw/`
 
 你有两种方式：
 
-### 方式 A（推荐）：让你现有的 OpenClaw 代你完成复制
+### 方式 A（推荐）：让你现有的 OpenClaw 代你完成部署
 
-把下面这段话发给你的 OpenClaw（你平时用的那个 Agent）：
+把下面这段话发给你的 OpenClaw（替换 `<>` 里的内容）：
 
 ```
-我要部署 OpenCrew（多 Agent 协作框架）。请你按下面步骤在我的本机执行，并且每一步都告诉我你做了什么：
+帮我部署 OpenCrew 多 Agent 团队。
 
-1) 读取我下载的 opencrew 仓库（路径：<填你的本地路径>）
-2) 备份 ~/.openclaw/openclaw.json（带时间戳）
-3) 把仓库里的 shared/*.md 复制到 ~/.openclaw/shared/
-4) 把仓库里的 workspaces/<agent>/*.md 复制到 ~/.openclaw/workspace-<agent>/
-   - 如果目录不存在就创建
-   - 不要覆盖我已有的同名文件；如遇冲突先停下来问我
-   - （推荐）为每个 workspace 创建软链接：~/.openclaw/workspace-<agent>/shared → ~/.openclaw/shared（若已存在则跳过）
-5) 提醒我提供 Slack Channel ID，然后按 docs/CONFIG_SNIPPET_2026.2.9.md 把最小增量合并到 ~/.openclaw/openclaw.json
-6) 重启 openclaw gateway，并验证 #cto/#hq 是否能正常响应
+仓库：请 clone https://github.com/AlexAnys/opencrew.git 到 /tmp/opencrew
+（如果已下载，仓库路径：<你的本地路径>）
 
-边界：不要改我的 models/auth/gateway 相关配置；只做 OpenCrew 的增量。
+Slack tokens（请写入配置，不要回显）：
+- Bot Token: <你的 xoxb- token>
+- App Token: <你的 xapp- token>
+
+我已创建以下频道并邀请了 bot：
+- #hq → CoS
+- #cto → CTO
+- #build → Builder
+
+请读仓库里的 DEPLOY.md，按流程完成部署。
+不要改我的 models / auth / gateway 配置，只做 OpenCrew 的增量。
 ```
+
+你的 OpenClaw 会读取本文件和 `docs/CONFIG_SNIPPET_2026.2.9.md`，自动完成备份、文件复制、配置合并、重启和验证。
 
 ### 方式 B：手动复制（透明但需要一点命令行）
 

@@ -76,51 +76,54 @@ OpenCrew 分为三层，每层职责清晰：
 > 前提：你已经能正常使用 OpenClaw（`openclaw status` 能跑通），且 Slack 已接入。
 > 如果 Slack 还没接入，先看 → [Slack 接入指南](docs/SLACK_SETUP.md)（约 20 分钟）
 
-### Step 1：创建 Slack 频道
+### Step 1：创建 Slack 频道 + 邀请 bot
 
-在你的 Slack 工作区创建 3 个频道（最小配置）：
+在你的 Slack 工作区创建频道，然后在每个频道里 `/invite @你的bot名`：
+
+| 频道 | Agent | 说明 |
+|------|-------|------|
+| `#hq` | CoS 幕僚长 | 你的主要对话窗口 |
+| `#cto` | CTO 技术合伙人 | 技术方向和任务拆解 |
+| `#build` | Builder 执行者 | 具体实现和交付 |
+
+> 按需扩展：`#invest`（CIO）`#know`（KO）`#ops`（Ops）`#research`（Research）
+
+### Step 2：让你的 OpenClaw 完成部署
+
+把下面这段话发给你现有的 OpenClaw（替换 `<>` 里的内容）：
 
 ```
-#hq     — CoS 幕僚长
-#cto    — CTO 技术合伙人
-#build  — Builder 执行者
+帮我部署 OpenCrew 多 Agent 团队。
+
+仓库：请 clone https://github.com/AlexAnys/opencrew.git 到 /tmp/opencrew
+（如果已下载，仓库路径：<你的本地路径>）
+
+Slack tokens（请写入配置，不要回显）：
+- Bot Token: <你的 xoxb- token>
+- App Token: <你的 xapp- token>
+
+我已创建以下频道并邀请了 bot：
+- #hq → CoS
+- #cto → CTO
+- #build → Builder
+
+请读仓库里的 DEPLOY.md，按流程完成部署。
+不要改我的 models / auth / gateway 配置，只做 OpenCrew 的增量。
 ```
 
-然后把 bot 邀请进去：在每个频道里输入 `/invite @你的bot名`
+你的 OpenClaw 会自动完成：备份现有配置 → 复制 Agent 文件 → 获取 Channel ID → 合并配置 → 重启。
 
-### Step 2：部署文件
+> 想手动部署？→ [DEPLOY.md](DEPLOY.md) 里有完整的手动命令
 
-把本仓库的文件放进你的 OpenClaw：
+### Step 3：验证
 
-```bash
-# 复制全局协议
-cp -r shared/* ~/.openclaw/shared/
+在 Slack 里测试：
 
-# 复制各 Agent 的 workspace
-for a in cos cto builder; do
-  mkdir -p ~/.openclaw/workspace-$a/memory
-  cp -r workspaces/$a/* ~/.openclaw/workspace-$a/
-  # 让每个 Agent 都能读到全局协议
-  ln -sf ~/.openclaw/shared ~/.openclaw/workspace-$a/shared
-done
-```
+1. 在 `#hq` 发一句话 → CoS 回复 ✅
+2. 在 `#cto` 发一句话 → CTO 回复 ✅
+3. 在 `#cto` 让 CTO 派个任务给 Builder → `#build` 出现 thread，Builder 回复 ✅
 
-> 不想敲命令？把 [DEPLOY.md](DEPLOY.md) 里的部署指令直接发给你现有的 OpenClaw，让它帮你执行。
-
-### Step 3：写入配置并重启
-
-按 [CONFIG_SNIPPET](docs/CONFIG_SNIPPET_2026.2.9.md) 把最小增量合并到 `~/.openclaw/openclaw.json`，然后：
-
-```bash
-openclaw gateway restart
-```
-
-### 验证
-
-在 `#hq` 发一句话 → CoS 回复 ✅
-在 `#cto` 让 CTO 派个任务给 Builder → `#build` 出现 thread，Builder 回复 ✅
-
-> 详细的分步指南（含 token 配置、常见报错、验证清单）→ [完整上手指南](docs/GETTING_STARTED.md)
+> 详细的分步指南（含常见报错、排查清单）→ [完整上手指南](docs/GETTING_STARTED.md)
 
 ---
 
