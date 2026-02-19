@@ -4,9 +4,11 @@ All notable changes to this repository will be documented in this file.
 
 The format is loosely based on Keep a Changelog.
 
-## [Unreleased]
+## [0.1.0] — 2026-02-19
 
 ### Changed
+- README「10 分钟上手」：从 3 步 bash 命令改为「建频道 → 发指令给 OpenClaw → 验证」，非技术用户友好
+- DEPLOY.md 方式 A：用户 prompt 从 12 行 6 步流程简化为自然语言（token + 频道映射 + 一句话）
 - README: 全面重构——以痛点驱动开场、新增 TOC/badges/FAQ/文档导航表、定位为"给决策者的多智能体操作系统"
 - ARCHITECTURE.md: 精简与 CONCEPTS.md 重复的内容，聚焦设计取舍和 Why
 - SLACK_SETUP.md: 移除本地路径引用，对齐"从 3 个频道开始"的定位
@@ -19,6 +21,7 @@ The format is loosely based on Keep a Changelog.
 - 所有保留文档统一添加面包屑导航
 
 ### Added
+- DEPLOY.md「给 OpenClaw 的执行提示」：结构化 6 步指引 + Slack API 自动获取 Channel ID
 - docs/GETTING_STARTED.md: 完整上手指南（4 阶段部署 + 常见报错 + 验证清单）
 - docs/CONCEPTS.md: 核心概念一站式页面（9 个关键机制详解）
 - docs/AGENT_ONBOARDING.md: Agent 入职指南（给 AI Agent 读的系统理解文档）
