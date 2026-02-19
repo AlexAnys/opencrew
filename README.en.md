@@ -45,7 +45,7 @@ If you're using OpenClaw, you've probably hit these walls:
 
 > Core mental model: **Channel = Role, Thread = Task**
 
-![OpenCrew Architecture](docs/OpenCrew-Architecture-with-slack.png)
+![OpenCrew Architecture](docs/Drawing_2026-02-16_16_58_excalidraw.png)
 
 OpenCrew has three layers, each with clear responsibilities:
 
