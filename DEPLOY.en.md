@@ -1,10 +1,10 @@
 [中文](DEPLOY.md) | **English**
 
-# Deploy Guide (Conservative Edition) -- Let Your Existing OpenClaw Deploy OpenCrew for You
+# Deploy Guide
 
-> Goal: **No "one-click scripts"**, no "complete openclaw.json" handed to you. Instead, use minimal increments + rollback-friendly steps to add OpenCrew into your existing OpenClaw.
+> **This document is designed to be sent directly to your OpenClaw, which will execute the deployment for you.** For a full manual walkthrough (with detailed explanations, common errors, verification checklist), see → [Full Getting Started Guide](docs/en/GETTING_STARTED.md)
 >
-> Default shape: **One `.openclaw`, one Gateway, multiple Agents, multiple workspaces** (similar to how your existing setup relates to multi-agent).
+> Principle: **No "one-click scripts"**, no "complete openclaw.json" handed to you. Use minimal increments + rollback-friendly steps to add OpenCrew into your existing OpenClaw.
 
 ---
 
@@ -34,29 +34,83 @@ Then invite the bot into each channel: `/invite @<bot>`.
 
 ---
 
+## Execution Prompt for OpenClaw
+
+> The following section is for the OpenClaw agent executing the deployment. If you're reading this as a human, you can skip ahead to Section 2.
+
+When a user asks you to deploy OpenCrew, follow this process:
+
+### Execution Steps
+
+```
+Step 1: Back up
+  cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%s)
+
+Step 2: Copy files (see "Method B" bash commands below, use as-is)
+  - shared/*.md → ~/.openclaw/shared/
+  - workspaces/<agent>/ → ~/.openclaw/workspace-<agent>/ (don't overwrite existing files)
+  - Create symlink for each workspace: shared → ~/.openclaw/shared
+  - Create subdirectories: memory/, ko/inbox, ko/knowledge, cto/scars, cto/patterns
+
+Step 3: Fetch Slack Channel IDs
+  User has provided the Bot Token. Use the Slack API to auto-fetch (don't ask user to copy manually):
+  curl -s -H "Authorization: Bearer <botToken>" \
+    "https://slack.com/api/conversations.list?types=public_channel&limit=200"
+  Match channels where is_member=true by name to get the Channel ID.
+  When user says "#hq → CoS", find the channel with name=hq.
+
+Step 4: Write Slack config
+  Write botToken and appToken into channels.slack (Socket Mode).
+
+Step 5: Merge agent config
+  Read docs/en/CONFIG_SNIPPET_2026.2.9.md in this repo, then merge these increments into openclaw.json:
+  - agents.list (add new agent entries, preserve user's existing main agent)
+  - bindings (Channel ID → Agent mapping)
+  - channels.slack.channels (allowlist + requireMention)
+  - tools.agentToAgent + session.agentToAgent (A2A protection)
+  - channels.slack.thread (thread isolation)
+
+Step 6: Restart and verify
+  openclaw gateway restart
+  openclaw status (confirm agent count and Slack status are correct)
+```
+
+### Boundaries (what NOT to do)
+
+- **Do not modify** user's `models` / `auth` / `gateway` config
+- **Do not delete** user's existing agents, bindings, or channels entries
+- If there's a conflict (e.g., user already has an agent with the same id), stop and ask
+
+---
+
 ## 2. Copy OpenCrew Files into Your `~/.openclaw/`
 
 You have two options:
 
-### Method A (Recommended): Let Your Existing OpenClaw Do the Copying
+### Method A (Recommended): Let Your Existing OpenClaw Handle the Deployment
 
-Send the following message to your OpenClaw (the agent you normally use):
+Send the following to your OpenClaw (replace `<>` with your values):
 
 ```
-I want to deploy OpenCrew (a multi-agent collaboration framework). Please execute the steps below on my local machine, and tell me what you did at each step:
+Deploy OpenCrew multi-agent team for me.
 
-1) Read the OpenCrew repo I downloaded (path: <fill in your local path>)
-2) Back up ~/.openclaw/openclaw.json (with a timestamp)
-3) Copy shared/*.md from the repo into ~/.openclaw/shared/
-4) Copy workspaces/<agent>/*.md from the repo into ~/.openclaw/workspace-<agent>/
-   - Create the directory if it doesn't exist
-   - Do NOT overwrite any of my existing files with the same name; if there's a conflict, stop and ask me
-   - (Recommended) Create a symlink for each workspace: ~/.openclaw/workspace-<agent>/shared -> ~/.openclaw/shared (skip if it already exists)
-5) Remind me to provide my Slack Channel IDs, then merge the minimal increment into ~/.openclaw/openclaw.json following docs/en/CONFIG_SNIPPET_2026.2.9.md
-6) Restart the openclaw gateway and verify that #cto / #hq respond normally
+Repo: please clone https://github.com/AlexAnys/opencrew.git to /tmp/opencrew
+(If already downloaded, repo path: <your local path>)
 
-Boundaries: Do NOT touch my models/auth/gateway configs -- only add the OpenCrew increments.
+Slack tokens (write to config, do not echo back):
+- Bot Token: <your xoxb- token>
+- App Token: <your xapp- token>
+
+I've created these channels and invited the bot:
+- #hq → CoS
+- #cto → CTO
+- #build → Builder
+
+Read DEPLOY.en.md in the repo and follow the deployment process.
+Do not touch my models / auth / gateway config — only add the OpenCrew increments.
 ```
+
+Your OpenClaw will read this file and `docs/en/CONFIG_SNIPPET_2026.2.9.md`, then automatically complete: backup, file copy, config merge, restart, and verification.
 
 ### Method B: Manual Copy (Transparent, but Requires Some Command Line)
 

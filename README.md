@@ -4,6 +4,8 @@
 
 > 适合所有人易上手的多智能体操作系统。
 > 把你的 OpenClaw 变成一支可管理的 AI 团队——领域专家各司其职，经验自动沉淀，Slack 就是你的指挥中心。
+>
+> 🤖 **To-Agent 友好**：文档结构经真实部署实测优化，你的 OpenClaw 可直接阅读并自动完成部署——最少人工介入。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built on OpenClaw](https://img.shields.io/badge/Built_on-OpenClaw-purple)](https://github.com/openclaw/openclaw)
