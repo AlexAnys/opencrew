@@ -4,6 +4,8 @@
 
 > A multi-agent operating system for decision-makers.
 > Turn your OpenClaw into a manageable AI team — domain experts each own their lane, experience auto-distills, and Slack is your command center.
+>
+> 🤖 **Agent-Ready Deployment** — Docs are structured and battle-tested for autonomous agent execution. Your OpenClaw reads the repo and deploys for you — minimal manual steps required.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built on OpenClaw](https://img.shields.io/badge/Built_on-OpenClaw-purple)](https://github.com/openclaw/openclaw)
@@ -70,51 +72,54 @@ KO (Knowledge Officer) distills reusable knowledge from all outputs. Ops (Operat
 > Prerequisites: You can already use OpenClaw normally (`openclaw status` works), and Slack is connected.
 > If Slack isn't connected yet → [Slack Setup Guide](docs/en/SLACK_SETUP.md) (~20 minutes)
 
-### Step 1: Create Slack Channels
+### Step 1: Create Slack Channels + Invite Bot
 
-Create 3 channels in your Slack workspace (minimum setup):
+Create channels in your Slack workspace, then `/invite @your-bot-name` in each one:
+
+| Channel | Agent | Description |
+|---------|-------|-------------|
+| `#hq` | CoS (Chief of Staff) | Your main conversation window |
+| `#cto` | CTO (Technical Co-founder) | Technical direction and task breakdown |
+| `#build` | Builder (Executor) | Implementation and delivery |
+
+> Add more as needed: `#invest` (CIO) `#know` (KO) `#ops` (Ops) `#research` (Research)
+
+### Step 2: Let Your OpenClaw Handle the Deployment
+
+Send the following to your existing OpenClaw (replace `<>` with your values):
 
 ```
-#hq     — CoS (Chief of Staff)
-#cto    — CTO (Technical Co-founder)
-#build  — Builder (Executor)
+Deploy OpenCrew multi-agent team for me.
+
+Repo: please clone https://github.com/AlexAnys/opencrew.git to /tmp/opencrew
+(If already downloaded, repo path: <your local path>)
+
+Slack tokens (write to config, do not echo back):
+- Bot Token: <your xoxb- token>
+- App Token: <your xapp- token>
+
+I've created these channels and invited the bot:
+- #hq → CoS
+- #cto → CTO
+- #build → Builder
+
+Read DEPLOY.en.md in the repo and follow the deployment process.
+Do not touch my models / auth / gateway config — only add the OpenCrew increments.
 ```
 
-Then invite the bot to each channel: type `/invite @your-bot-name` in each one.
+Your OpenClaw will automatically: back up existing config → copy agent files → fetch Channel IDs → merge config → restart.
 
-### Step 2: Deploy Files
+> Prefer manual deployment? → [DEPLOY.en.md](DEPLOY.en.md) has full manual commands.
 
-Copy this repo's files into your OpenClaw:
+### Step 3: Verify
 
-```bash
-# Copy global protocols
-cp -r shared/* ~/.openclaw/shared/
+Test in Slack:
 
-# Copy each agent's workspace
-for a in cos cto builder; do
-  mkdir -p ~/.openclaw/workspace-$a/memory
-  cp -r workspaces/$a/* ~/.openclaw/workspace-$a/
-  # Let every agent access the global protocols
-  ln -sf ~/.openclaw/shared ~/.openclaw/workspace-$a/shared
-done
-```
+1. Send a message in `#hq` → CoS replies ✅
+2. Send a message in `#cto` → CTO replies ✅
+3. In `#cto`, ask CTO to dispatch a task to Builder → a thread appears in `#build`, Builder replies ✅
 
-> Don't want to type commands? Send the deployment instructions from [DEPLOY.en.md](DEPLOY.en.md) to your existing OpenClaw and let it do the work.
-
-### Step 3: Write Config and Restart
-
-Merge the minimal config snippet from [CONFIG_SNIPPET](docs/en/CONFIG_SNIPPET_2026.2.9.md) into `~/.openclaw/openclaw.json`, then:
-
-```bash
-openclaw gateway restart
-```
-
-### Verify
-
-Send a message in `#hq` → CoS replies ✅
-Ask CTO in `#cto` to dispatch a task to Builder → a thread appears in `#build`, Builder replies ✅
-
-> Detailed step-by-step guide (including token setup, common errors, verification checklist) → [Full Getting Started Guide](docs/en/GETTING_STARTED.md)
+> Detailed step-by-step guide (including common errors, troubleshooting checklist) → [Full Getting Started Guide](docs/en/GETTING_STARTED.md)
 
 ---
 
