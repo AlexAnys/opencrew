@@ -4,6 +4,15 @@ All notable changes to this repository will be documented in this file.
 
 The format is loosely based on Keep a Changelog.
 
+## [0.1.1] — 2026-02-20
+
+### Changed
+- README (both languages): added 🤖 Agent-Ready Deployment badge
+- README.en.md "Get Started in 10 Minutes": updated from bash commands to to-agent deployment flow (matching Chinese version from v0.1.0)
+- DEPLOY.en.md: added "Execution Prompt for OpenClaw" section — structured 6-step instructions for agent-driven deployment
+- DEPLOY.en.md: updated Method A prompt to match Chinese version (cleaner, shorter)
+- DEPLOY.en.md: opening rewritten to clearly state the doc is designed for direct agent consumption
+
 ## [0.1.0] — 2026-02-19
 
 ### Changed
