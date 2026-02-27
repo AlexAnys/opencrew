@@ -227,6 +227,7 @@ Full guide (with config examples and validation steps) → [A2A Setup Guide](doc
 
 - Multi-agent domain separation + Slack channel binding
 - A2A two-step trigger (Slack visible anchor + sessions_send)
+- A2A closed-loop (multi-round WAIT discipline + dual-channel trace + closed-loop DoD)
 - Closeout / Checkpoint enforced structured outputs
 - Autonomy Ladder (L0–L3)
 - Ops Review governance loop
@@ -308,6 +309,7 @@ opencrew/
 │   ├── GETTING_STARTED.md            ← Full getting started guide (Chinese)
 │   ├── CONCEPTS.md                   ← Core concepts deep dive (Chinese)
 │   ├── ARCHITECTURE.md               ← Architecture design (Chinese)
+│   ├── A2A_SETUP_GUIDE.md            ← A2A setup guide — for agents (Chinese)
 │   ├── CUSTOMIZATION.md              ← Customization guide (Chinese)
 │   ├── AGENT_ONBOARDING.md           ← Agent onboarding guide (Chinese)
 │   ├── FAQ.md                        ← FAQ (Chinese)

@@ -233,6 +233,7 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 - 多 Agent 领域分工 + Slack 频道绑定
 - A2A 两步触发（Slack 可见锚点 + sessions_send）
+- A2A 闭环（多轮 WAIT 纪律 + 双通道留痕 + 闭环 DoD）
 - Closeout / Checkpoint 强制结构化产物
 - Autonomy Ladder（L0-L3）
 - Ops Review 治理闭环
@@ -309,6 +310,7 @@ opencrew/
 │   ├── GETTING_STARTED.md            ← 完整上手指南
 │   ├── CONCEPTS.md                   ← 核心概念详解
 │   ├── ARCHITECTURE.md               ← 架构设计
+│   ├── A2A_SETUP_GUIDE.md            ← A2A 跑通指南（给 Agent 读的）
 │   ├── CUSTOMIZATION.md              ← 自定义指南
 │   ├── AGENT_ONBOARDING.md           ← Agent 入职指南（给 Agent 读的）
 │   ├── FAQ.md                        ← 常见问题
