@@ -1,6 +1,6 @@
 [中文](../DISCORD_SETUP.md) | **English**
 
-> 📖 [README](../../README.en.md) → [Getting Started](GETTING_STARTED.md) → **Discord Setup** → [Config Reference](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 [README](../../README.en.md) → [Getting Started](GETTING_STARTED.md) → **Discord Setup**
 
 # Discord Setup
 

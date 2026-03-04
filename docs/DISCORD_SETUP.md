@@ -1,6 +1,6 @@
 **中文** | [English](en/DISCORD_SETUP.md)
 
-> 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **Discord 接入指南** → [配置参考](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **Discord 接入指南**
 
 # Discord 接入指南
 
