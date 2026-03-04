@@ -3,7 +3,8 @@
 # OpenCrew - 高效协同、稳定迭代的Openclaw团队
 
 > 适合所有人易上手的多智能体操作系统。
-> 把你的 OpenClaw 变成一支可管理的 AI 团队——领域专家各司其职，经验自动沉淀，Slack 就是你的指挥中心。
+> 把你的 OpenClaw 变成一支可管理的 AI 团队——领域专家各司其职，经验自动沉淀。
+> 支持 **Slack** · **飞书** · **Discord** — 选择你熟悉的平台作为指挥中心。
 >
 > 🤖 **To-Agent 友好**：文档结构经真实部署实测优化，你的 OpenClaw 可直接阅读并自动完成部署——最少人工介入。
 
@@ -35,7 +36,7 @@
 | 你的痛点 | 根本原因 | OpenCrew 怎么解 |
 |---------|---------|----------------|
 | 聊着聊着 Agent 变"迟钝"了 | 一个 Agent 承担所有领域，上下文膨胀 | 多个 Agent 各管各的领域，互不污染 |
-| 多项目并行，来回切 session | 没有可视化的任务总览 | Slack 频道=岗位，thread=任务，一目了然 |
+| 多项目并行，来回切 session | 没有可视化的任务总览 | 频道/群组=岗位，thread=任务，一目了然 |
 | 每一步都要你确认，累 | Agent 不知道哪些该自主做 | 深度意图对齐 + 自主等级机制 |
 | 踩过的坑下次还踩 | 经验散落在聊天记录里 | 三层知识沉淀：对话→结构化总结→可复用知识 |
 | Agent 越用越"跑偏" | 自我调整没人审计 | 专职维护 Agent 负责审计和防漂移 |
@@ -76,10 +77,20 @@ OpenCrew 分为三层，每层职责清晰：
 
 ## 10 分钟上手
 
-> 前提：你已经能正常使用 OpenClaw（`openclaw status` 能跑通），且 Slack 已接入。
-> 如果 Slack 还没接入，先看 → [Slack 接入指南](docs/SLACK_SETUP.md)（约 20 分钟）
+> 前提：你已经能正常使用 OpenClaw（`openclaw status` 能跑通），且已接入你选择的平台。
 
-### Step 1：创建 Slack 频道 + 邀请 bot
+### 选择你的平台
+
+| 平台 | 接入指南 | Thread（任务隔离） | 适合谁 |
+|------|---------|-------------------|--------|
+| **Slack** | [Slack 接入指南](docs/SLACK_SETUP.md) | ✅ 完整支持 | 已使用 Slack 的团队 |
+| **飞书** | [飞书接入指南](docs/FEISHU_SETUP.md) | ⚠️ 暂不支持（[详情](docs/FEISHU_SETUP.md#与-slack-的关键差异thread话题)） | 国内团队 / 飞书用户 |
+| **Discord** | [Discord 接入指南](docs/DISCORD_SETUP.md) | ✅ 完整支持 | 开发者社区 / Discord 用户 |
+
+> 三个平台的核心模型一致：**一个 bot/应用** 加入多个频道/群组，每个频道/群组绑定一个 Agent。
+> 完成平台接入后，回到下面的 Step 1 继续。以下以 Slack 为例展示完整流程，飞书和 Discord 的操作步骤对等。
+
+### Step 1：创建频道/群组 + 邀请 bot
 
 在你的 Slack 工作区创建频道，然后在每个频道里 `/invite @你的bot名`：
 
@@ -116,15 +127,60 @@ Slack tokens（请写入配置，不要回显）：
 
 你的 OpenClaw 会自动完成：备份现有配置 → 复制 Agent 文件 → 获取 Channel ID → 合并配置 → 重启。
 
+<details>
+<summary>使用飞书？点这里看飞书版部署提示词</summary>
+
+```
+帮我部署 OpenCrew 多 Agent 团队。
+
+仓库：请 clone https://github.com/AlexAnys/opencrew.git 到 /tmp/opencrew
+（如果已下载，仓库路径：<你的本地路径>）
+
+飞书凭证（请写入配置，不要回显）：
+- App ID: <你的 cli_xxx>
+- App Secret: <你的 secret>
+
+我已创建以下群组并添加了机器人：
+- 总部群 → CoS
+- 技术群 → CTO
+- 执行群 → Builder
+
+请读仓库里的 DEPLOY.md，按流程完成部署。
+不要改我的 models / auth / gateway 配置，只做 OpenCrew 的增量。
+```
+</details>
+
+<details>
+<summary>使用 Discord？点这里看 Discord 版部署提示词</summary>
+
+```
+帮我部署 OpenCrew 多 Agent 团队。
+
+仓库：请 clone https://github.com/AlexAnys/opencrew.git 到 /tmp/opencrew
+（如果已下载，仓库路径：<你的本地路径>）
+
+Discord 凭证（请写入配置，不要回显）：
+- Bot Token: <你的 MTxxx... token>
+
+我已创建以下频道并邀请了 bot：
+- #hq → CoS
+- #cto → CTO
+- #build → Builder
+
+请读仓库里的 DEPLOY.md，按流程完成部署。
+不要改我的 models / auth / gateway 配置，只做 OpenCrew 的增量。
+```
+</details>
+
 > 想手动部署？→ [DEPLOY.md](DEPLOY.md) 里有完整的手动命令
 
 ### Step 3：验证
 
-在 Slack 里测试：
+在你的平台里测试：
 
-1. 在 `#hq` 发一句话 → CoS 回复 ✅
-2. 在 `#cto` 发一句话 → CTO 回复 ✅
-3. 在 `#cto` 让 CTO 派个任务给 Builder → `#build` 出现 thread，Builder 回复 ✅
+1. 在 CoS 对应的频道/群组发一句话 → CoS 回复 ✅
+2. 在 CTO 对应的频道/群组发一句话 → CTO 回复 ✅
+3. 让 CTO 派个任务给 Builder → Builder 对应的频道/群组出现回复 ✅
 
 > 详细的分步指南（含常见报错、排查清单）→ [完整上手指南](docs/GETTING_STARTED.md)
 
@@ -217,6 +273,9 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 | **[已知问题](docs/KNOWN_ISSUES.md)** | 系统的真实边界和当前最佳实践 | 遇到奇怪行为时 |
 | **[开发历程](docs/JOURNEY.md)** | 从一个人的痛点到一支虚拟团队 | 想了解来龙去脉 |
 | **[常见问题](docs/FAQ.md)** | 高频问答 | 快速查疑 |
+| **[Slack 接入指南](docs/SLACK_SETUP.md)** | Slack App 创建和配置 | 使用 Slack 时 |
+| **[飞书接入指南](docs/FEISHU_SETUP.md)** | 飞书自建应用创建和配置 | 使用飞书时 |
+| **[Discord 接入指南](docs/DISCORD_SETUP.md)** | Discord Bot 创建和配置 | 使用 Discord 时 |
 
 ### 给你的 Agent 看的（部署时 Agent 需要理解的）
 
@@ -232,7 +291,7 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 ### ✅ 已稳定运行
 
-- 多 Agent 领域分工 + Slack 频道绑定
+- 多 Agent 领域分工 + 频道绑定（Slack / 飞书 / Discord）
 - A2A 两步触发（Slack 可见锚点 + sessions_send）
 - A2A 闭环（多轮 WAIT 纪律 + 双通道留痕 + 闭环 DoD）
 - Closeout / Checkpoint 强制结构化产物
@@ -262,9 +321,9 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 那些是给开发者写代码用的 SDK。OpenCrew 是给决策者管团队用的系统——你通过 Slack 管理 AI 团队，不用写一行代码。它们解决"怎么编排 Agent"，OpenCrew 解决"怎么管理一支 AI 团队"。
 
-**Q：不用 Slack 行不行？**
+**Q：支持哪些平台？**
 
-目前 Slack 是主要界面。架构设计围绕"频道=岗位、thread=任务"展开，Slack 的特性（thread 隔离、Unreads、手机端）天然匹配。其他平台在 roadmap 上。
+目前支持 **Slack**、**飞书** 和 **Discord**。核心模型"频道/群组=岗位"在三个平台一致。Slack 和 Discord 完整支持 thread 任务隔离；飞书的 thread 支持受限于 OpenClaw 插件，暂不可用（[详情](docs/FEISHU_SETUP.md#与-slack-的关键差异thread话题)）。选择你团队最常用的即可。
 
 **Q：会不会消耗很多 token？**
 
@@ -285,7 +344,7 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 - 多 Agent 协作架构的改进建议
 - 知识系统（检索/索引/记忆）的实践经验
 - Slack thread / session 的稳定性优化思路
-- 非 Slack 平台（Discord / Telegram / 飞书）的适配方案
+- 更多平台（Telegram / Lark 等）的适配方案
 - 英文文档的改进与扩展（[English docs](README.en.md) 已可用）
 
 ---
@@ -317,8 +376,10 @@ opencrew/
 │   ├── FAQ.md                        ← 常见问题
 │   ├── KNOWN_ISSUES.md               ← 已知问题
 │   ├── JOURNEY.md                    ← 开发历程
-│   ├── SLACK_SETUP.md                ← Slack App 创建指南
-│   └── CONFIG_SNIPPET_2026.2.9.md    ← 最小增量配置
+│   ├── SLACK_SETUP.md                ← Slack 接入指南
+│   ├── FEISHU_SETUP.md               ← 飞书接入指南
+│   ├── DISCORD_SETUP.md              ← Discord 接入指南
+│   └── CONFIG_SNIPPET_2026.2.9.md    ← 最小增量配置（Slack）
 ├── patches/                          ← 高级 workaround（不推荐新手）
 └── v2-lite/                          ← 精简版探索方向（实验性）
 ```
@@ -329,6 +390,8 @@ opencrew/
 
 - [OpenClaw 官方文档](https://docs.openclaw.ai/)
 - [OpenClaw Slack 集成文档](https://docs.openclaw.ai/zh-CN/channels/slack)
+- [OpenClaw 飞书集成文档](https://docs.openclaw.ai/channels/feishu)
+- [OpenClaw Discord 集成文档](https://docs.openclaw.ai/channels/discord)
 - [OpenClaw Heartbeat 文档](https://docs.openclaw.ai/zh-CN/gateway/heartbeat)
 
 ---

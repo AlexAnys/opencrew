@@ -3,7 +3,8 @@
 # OpenCrew
 
 > A multi-agent operating system for decision-makers.
-> Turn your OpenClaw into a manageable AI team — domain experts each own their lane, experience auto-distills, and Slack is your command center.
+> Turn your OpenClaw into a manageable AI team — domain experts each own their lane, experience auto-distills.
+> Supports **Slack** · **Feishu** · **Discord** — pick the platform your team already uses.
 >
 > 🤖 **Agent-Ready Deployment** — Docs are structured and battle-tested for autonomous agent execution. Your OpenClaw reads the repo and deploys for you — minimal manual steps required.
 
@@ -35,7 +36,7 @@ If you're using OpenClaw, you've probably hit these walls:
 | Your Pain Point | Root Cause | How OpenCrew Fixes It |
 |----------------|------------|----------------------|
 | Your agent gets "dumber" the longer you chat | One agent handles every domain — context bloat | Multiple agents each own their domain, no cross-contamination |
-| Juggling multiple projects, constantly switching sessions | No visual task overview | Slack channel = role, thread = task — everything at a glance |
+| Juggling multiple projects, constantly switching sessions | No visual task overview | Channel/group = role, thread = task — everything at a glance |
 | Every step needs your confirmation — exhausting | Agent doesn't know what it can do on its own | Autonomy Ladder: reversible actions proceed automatically, irreversible ones ask you |
 | You hit the same pitfalls again and again | Lessons are scattered across chat history | Three-layer Knowledge Distillation: conversations → structured summaries → reusable knowledge |
 | Your agent drifts further off-track over time | Self-adjustments with no audit trail | Dedicated Ops agent handles auditing and drift prevention |
@@ -70,10 +71,20 @@ KO (Knowledge Officer) distills reusable knowledge from all outputs. Ops (Operat
 
 ## Get Started in 10 Minutes
 
-> Prerequisites: You can already use OpenClaw normally (`openclaw status` works), and Slack is connected.
-> If Slack isn't connected yet → [Slack Setup Guide](docs/en/SLACK_SETUP.md) (~20 minutes)
+> Prerequisites: You can already use OpenClaw normally (`openclaw status` works), and your chosen platform is connected.
 
-### Step 1: Create Slack Channels + Invite Bot
+### Choose Your Platform
+
+| Platform | Setup Guide | Thread (task isolation) | Best for |
+|----------|------------|------------------------|----------|
+| **Slack** | [Slack Setup Guide](docs/en/SLACK_SETUP.md) | ✅ Full support | Teams already using Slack |
+| **Feishu** | [Feishu Setup Guide](docs/en/FEISHU_SETUP.md) | ⚠️ Not yet supported ([details](docs/en/FEISHU_SETUP.md#key-difference-from-slack-thread-support)) | Teams in China / Feishu users |
+| **Discord** | [Discord Setup Guide](docs/en/DISCORD_SETUP.md) | ✅ Full support | Developer communities / Discord users |
+
+> All three platforms share the same core model: **one bot/app** joins multiple channels/groups, each channel/group binds to one Agent.
+> After completing platform setup, come back to Step 1 below. The walkthrough uses Slack as an example — Feishu and Discord steps are equivalent.
+
+### Step 1: Create Channels/Groups + Invite Bot
 
 Create channels in your Slack workspace, then `/invite @your-bot-name` in each one:
 
@@ -110,15 +121,60 @@ Do not touch my models / auth / gateway config — only add the OpenCrew increme
 
 Your OpenClaw will automatically: back up existing config → copy agent files → fetch Channel IDs → merge config → restart.
 
+<details>
+<summary>Using Feishu? Click here for the Feishu deployment prompt</summary>
+
+```
+Deploy OpenCrew multi-agent team for me.
+
+Repo: please clone https://github.com/AlexAnys/opencrew.git to /tmp/opencrew
+(If already downloaded, repo path: <your local path>)
+
+Feishu credentials (write to config, do not echo back):
+- App ID: <your cli_xxx>
+- App Secret: <your secret>
+
+I've created these group chats and added the bot:
+- HQ group → CoS
+- Tech group → CTO
+- Build group → Builder
+
+Read DEPLOY.en.md in the repo and follow the deployment process.
+Do not touch my models / auth / gateway config — only add the OpenCrew increments.
+```
+</details>
+
+<details>
+<summary>Using Discord? Click here for the Discord deployment prompt</summary>
+
+```
+Deploy OpenCrew multi-agent team for me.
+
+Repo: please clone https://github.com/AlexAnys/opencrew.git to /tmp/opencrew
+(If already downloaded, repo path: <your local path>)
+
+Discord credentials (write to config, do not echo back):
+- Bot Token: <your MTxxx... token>
+
+I've created these channels and invited the bot:
+- #hq → CoS
+- #cto → CTO
+- #build → Builder
+
+Read DEPLOY.en.md in the repo and follow the deployment process.
+Do not touch my models / auth / gateway config — only add the OpenCrew increments.
+```
+</details>
+
 > Prefer manual deployment? → [DEPLOY.en.md](DEPLOY.en.md) has full manual commands.
 
 ### Step 3: Verify
 
-Test in Slack:
+Test in your platform:
 
-1. Send a message in `#hq` → CoS replies ✅
-2. Send a message in `#cto` → CTO replies ✅
-3. In `#cto`, ask CTO to dispatch a task to Builder → a thread appears in `#build`, Builder replies ✅
+1. Send a message in the CoS channel/group → CoS replies ✅
+2. Send a message in the CTO channel/group → CTO replies ✅
+3. Ask CTO to dispatch a task to Builder → Builder replies in their channel/group ✅
 
 > Detailed step-by-step guide (including common errors, troubleshooting checklist) → [Full Getting Started Guide](docs/en/GETTING_STARTED.md)
 
@@ -211,6 +267,9 @@ Full guide (with config examples and validation steps) → [A2A Setup Guide](doc
 | **[Known Issues](docs/en/KNOWN_ISSUES.md)** | Real system boundaries and current best practices | When you hit weird behavior |
 | **[The Journey](docs/en/JOURNEY.md)** | From one person's pain point to a virtual team | Want the backstory |
 | **[FAQ](docs/en/FAQ.md)** | Frequently asked questions | Quick lookup |
+| **[Slack Setup](docs/en/SLACK_SETUP.md)** | Slack App creation and config | Using Slack |
+| **[Feishu Setup](docs/en/FEISHU_SETUP.md)** | Feishu custom app creation and config | Using Feishu |
+| **[Discord Setup](docs/en/DISCORD_SETUP.md)** | Discord Bot creation and config | Using Discord |
 
 ### For Your Agents (what agents need to understand during deployment)
 
@@ -226,7 +285,7 @@ Full guide (with config examples and validation steps) → [A2A Setup Guide](doc
 
 ### ✅ Stable and Running
 
-- Multi-agent domain separation + Slack channel binding
+- Multi-agent domain separation + channel binding (Slack / Feishu / Discord)
 - A2A two-step trigger (Slack visible anchor + sessions_send)
 - A2A closed-loop (multi-round WAIT discipline + dual-channel trace + closed-loop DoD)
 - Closeout / Checkpoint enforced structured outputs
@@ -256,9 +315,9 @@ No. OpenCrew was designed and deployed by a non-technical user with an economics
 
 Those are SDKs for developers to write code. OpenCrew is a system for decision-makers to manage a team — you manage your AI team through Slack, no code required. They solve "how to orchestrate agents." OpenCrew solves "how to manage an AI team."
 
-**Q: Can I use something other than Slack?**
+**Q: Which platforms are supported?**
 
-Slack is the primary interface for now. The architecture is built around "channel = role, thread = task," and Slack's features (thread isolation, Unreads, mobile app) are a natural fit. Other platforms are on the roadmap.
+**Slack**, **Feishu**, and **Discord**. The core model "channel/group = role" is consistent across all three. Slack and Discord fully support thread-based task isolation; Feishu's thread support is limited by the OpenClaw plugin and not yet available ([details](docs/en/FEISHU_SETUP.md#key-difference-from-slack-thread-support)). Pick whichever your team uses most.
 
 **Q: Won't this burn through a lot of tokens?**
 
@@ -279,7 +338,7 @@ Issues and PRs are welcome. We especially appreciate:
 - Improvement ideas for multi-agent collaboration architecture
 - Practical experience with knowledge systems (retrieval / indexing / memory)
 - Stability optimizations for Slack thread / session handling
-- Adapters for non-Slack platforms (Discord / Telegram / Lark)
+- Adapters for more platforms (Telegram / Lark / etc.)
 - Bug reports and improvements for our English documentation
 
 ---
@@ -316,8 +375,10 @@ opencrew/
 │   ├── FAQ.md                        ← FAQ (Chinese)
 │   ├── KNOWN_ISSUES.md               ← Known issues (Chinese)
 │   ├── JOURNEY.md                    ← The journey (Chinese)
-│   ├── SLACK_SETUP.md                ← Slack app creation guide (Chinese)
-│   └── CONFIG_SNIPPET_2026.2.9.md    ← Minimal config snippet (Chinese)
+│   ├── SLACK_SETUP.md                ← Slack setup guide (Chinese)
+│   ├── FEISHU_SETUP.md               ← Feishu setup guide (Chinese)
+│   ├── DISCORD_SETUP.md              ← Discord setup guide (Chinese)
+│   └── CONFIG_SNIPPET_2026.2.9.md    ← Minimal config snippet (Slack)
 ├── patches/                          ← Advanced workarounds (not recommended for beginners)
 └── v2-lite/                          ← Lighter architecture exploration (experimental)
 ```
