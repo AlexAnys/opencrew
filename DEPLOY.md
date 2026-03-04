@@ -22,18 +22,21 @@
 
 ---
 
-## 1. 创建 Slack 频道（岗位）
+## 1. 创建频道/群组（岗位）
 
-建议先创建这 7 个频道（名字可自定义）：
-- #hq（CoS）
-- #cto（CTO）
-- #build（Builder）
-- #invest（CIO，可选，可替换为你的领域）
-- #know（KO，建议开启 requireMention 降噪；开源版默认关闭，先保证跑通）
-- #ops（Ops，建议开启 requireMention 降噪；开源版默认关闭，先保证跑通）
-- #research（Research，可选，通常只 spawn）
+在你的消息平台上创建以下频道或群组（名字可自定义）：
+- #hq / 总部群（CoS）
+- #cto / 技术群（CTO）
+- #build / 执行群（Builder）
+- #invest / 投资群（CIO，可选，可替换为你的领域）
+- #know / 知识群（KO，建议开启 requireMention 降噪；开源版默认关闭，先保证跑通）
+- #ops / 运维群（Ops，建议开启 requireMention 降噪；开源版默认关闭，先保证跑通）
+- #research / 调研群（Research，可选，通常只 spawn）
 
-然后把 bot 邀请进这些频道：`/invite @<bot>`。
+然后把 bot 邀请进去：
+- Slack：`/invite @<bot>`
+- 飞书：群设置 → 添加机器人
+- Discord：频道权限中确认 bot 可见
 
 ---
 
@@ -55,15 +58,22 @@ Step 2: 复制文件（见下方"方式 B"的 bash 命令，照搬即可）
   - 为每个 workspace 创建软链接：shared → ~/.openclaw/shared
   - 创建子目录：memory/, ko/inbox, ko/knowledge, cto/scars, cto/patterns
 
-Step 3: 获取 Slack Channel ID
-  用户已提供 Bot Token。用 Slack API 自动获取（不需要让用户手动复制）：
-  curl -s -H "Authorization: Bearer <botToken>" \
-    "https://slack.com/api/conversations.list?types=public_channel&limit=200"
-  从返回的 channels 里匹配 is_member=true 的频道名，拿到 Channel ID。
-  用户告诉你"#hq → CoS"时，找到 name=hq 的频道即可。
+Step 3: 获取频道/群组 ID
+  按用户使用的平台获取 ID：
+  - Slack：用户已提供 Bot Token，用 Slack API 自动获取：
+    curl -s -H "Authorization: Bearer <botToken>" \
+      "https://slack.com/api/conversations.list?types=public_channel&limit=200"
+    匹配 is_member=true 的频道名拿到 Channel ID。
+  - 飞书：用 openclaw channels resolve 或从日志中获取 chat_id（oc_xxx 格式）。
+    详见 docs/FEISHU_SETUP.md Step 6。
+  - Discord：开启开发者模式后右键频道复制 ID，或从日志获取。
+    详见 docs/DISCORD_SETUP.md Step 6。
 
-Step 4: 写入 Slack 配置
-  把 botToken 和 appToken 写入 channels.slack（Socket Mode）。
+Step 4: 写入平台配置
+  按平台把凭证写入对应的 channels 配置：
+  - Slack：botToken + appToken → channels.slack（Socket Mode）
+  - 飞书：appId + appSecret → channels.feishu
+  - Discord：botToken → channels.discord
 
 Step 5: 合并 Agent 配置
   按用户使用的平台，读对应的配置参考文件：
@@ -78,7 +88,7 @@ Step 5: 合并 Agent 配置
 
 Step 6: 重启并验证
   openclaw gateway restart
-  openclaw status（确认 Agent 数量和 Slack 状态正常）
+  openclaw status（确认 Agent 数量和平台连接状态正常）
 ```
 
 ### 边界（不要做的事）
@@ -103,20 +113,23 @@ Step 6: 重启并验证
 仓库：请 clone https://github.com/AlexAnys/opencrew.git 到 /tmp/opencrew
 （如果已下载，仓库路径：<你的本地路径>）
 
-Slack tokens（请写入配置，不要回显）：
-- Bot Token: <你的 xoxb- token>
-- App Token: <你的 xapp- token>
+我使用的平台：<Slack / 飞书 / Discord>（选一个）
 
-我已创建以下频道并邀请了 bot：
-- #hq → CoS
-- #cto → CTO
-- #build → Builder
+平台凭证（请写入配置，不要回显）：
+- Slack: Bot Token (xoxb-) + App Token (xapp-)
+- 飞书: App ID (cli_xxx) + App Secret
+- Discord: Bot Token
+
+我已创建以下频道/群组并邀请了 bot：
+- #hq / 总部群 → CoS
+- #cto / 技术群 → CTO
+- #build / 执行群 → Builder
 
 请读仓库里的 DEPLOY.md，按流程完成部署。
 不要改我的 models / auth / gateway 配置，只做 OpenCrew 的增量。
 ```
 
-你的 OpenClaw 会读取本文件和 `docs/CONFIG_SNIPPET_2026.2.9.md`，自动完成备份、文件复制、配置合并、重启和验证。
+你的 OpenClaw 会读取本文件和对应平台的 CONFIG_SNIPPET 文件，自动完成备份、文件复制、配置合并、重启和验证。
 
 ### 方式 B：手动复制（透明但需要一点命令行）
 

@@ -32,7 +32,7 @@ cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.$(date +%Y%m%d-%H%M%S
   - `<FEISHU_GROUP_ID_OPS>` (Operations group → Ops)
   - `<FEISHU_GROUP_ID_RESEARCH>` (Research group → Research, optional)
 
-See [Feishu Setup Guide Step 6](FEISHU_SETUP.md#step-6-get-group-id-two-methods) for how to obtain them.
+See [Feishu Setup Guide Step 6](FEISHU_SETUP.md#step-6-get-group-chat-ids-two-methods) for how to obtain them.
 
 ---
 
