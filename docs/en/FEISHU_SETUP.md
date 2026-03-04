@@ -1,6 +1,6 @@
 [中文](../FEISHU_SETUP.md) | **English**
 
-> 📖 [README](../../README.en.md) → [Getting Started](GETTING_STARTED.md) → **Feishu Setup** → [Config Reference](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 [README](../../README.en.md) → [Getting Started](GETTING_STARTED.md) → **Feishu Setup**
 
 # Feishu Setup
 
