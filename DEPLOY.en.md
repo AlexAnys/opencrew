@@ -12,10 +12,13 @@
 
 1. You can run OpenClaw normally (on your local machine)
    - You can run: `openclaw status`
-2. You have a Slack workspace
-3. You plan to use **one Slack App** to manage all OpenCrew Agents (adding/removing Agents later is just adding/removing channels + config bindings)
+2. You have a messaging platform (Slack / Feishu / Discord -- pick one)
+3. You plan to use **one App/Bot** to manage all OpenCrew Agents (adding/removing Agents later is just adding/removing channels/groups + config bindings)
 
-If you haven't connected Slack to OpenClaw yet: complete [`docs/en/SLACK_SETUP.md`](docs/en/SLACK_SETUP.md) first.
+If you haven't connected a messaging platform to OpenClaw yet:
+- Slack → [`docs/en/SLACK_SETUP.md`](docs/en/SLACK_SETUP.md)
+- Feishu → [`docs/en/FEISHU_SETUP.md`](docs/en/FEISHU_SETUP.md)
+- Discord → [`docs/en/DISCORD_SETUP.md`](docs/en/DISCORD_SETUP.md)
 
 ---
 
@@ -63,12 +66,15 @@ Step 4: Write Slack config
   Write botToken and appToken into channels.slack (Socket Mode).
 
 Step 5: Merge agent config
-  Read docs/en/CONFIG_SNIPPET_2026.2.9.md in this repo, then merge these increments into openclaw.json:
+  Read the config reference matching the user's platform:
+  - Slack → docs/en/CONFIG_SNIPPET_2026.2.9.md
+  - Feishu → docs/en/CONFIG_SNIPPET_FEISHU.md
+  - Discord → docs/en/CONFIG_SNIPPET_DISCORD.md
+  Then merge these increments into openclaw.json:
   - agents.list (add new agent entries, preserve user's existing main agent)
-  - bindings (Channel ID → Agent mapping)
-  - channels.slack.channels (allowlist + requireMention)
+  - bindings (channel/group → Agent mapping)
+  - channels allowlist (allowlist + requireMention)
   - tools.agentToAgent + session.agentToAgent (A2A protection)
-  - channels.slack.thread (thread isolation)
 
 Step 6: Restart and verify
   openclaw gateway restart
@@ -138,14 +144,17 @@ mkdir -p ~/.openclaw/workspace-cto/{scars,patterns}
 
 ---
 
-## 3. Write the Minimal Incremental Config (OpenClaw 2026.2.9)
+## 3. Write the Minimal Incremental Config
 
-Follow this document: [`docs/en/CONFIG_SNIPPET_2026.2.9.md`](docs/en/CONFIG_SNIPPET_2026.2.9.md)
+Choose the config reference for your platform:
+- **Slack** → [`docs/en/CONFIG_SNIPPET_2026.2.9.md`](docs/en/CONFIG_SNIPPET_2026.2.9.md)
+- **Feishu** → [`docs/en/CONFIG_SNIPPET_FEISHU.md`](docs/en/CONFIG_SNIPPET_FEISHU.md)
+- **Discord** → [`docs/en/CONFIG_SNIPPET_DISCORD.md`](docs/en/CONFIG_SNIPPET_DISCORD.md)
 
-It covers:
+Each file covers:
 - New agents to add (and their workspace paths)
-- Slack channel bindings (channel = role)
-- Slack allowlist (security: only these channels can trigger agents)
+- Platform channel/group bindings (channel = role)
+- Platform allowlist (security: only these channels/groups can trigger agents)
 - A2A safeguards (maxPingPongTurns / initiation permissions / subagent session restrictions)
 - How to roll back
 

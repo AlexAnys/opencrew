@@ -224,4 +224,4 @@ Key differences:
 
 ---
 
-> 📖 Next → [Getting Started](GETTING_STARTED.md) · [Config Reference](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 Next → [Getting Started](GETTING_STARTED.md) · [Feishu Config Reference](CONFIG_SNIPPET_FEISHU.md)

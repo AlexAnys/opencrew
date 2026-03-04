@@ -12,10 +12,13 @@
 
 1. 你能正常运行 OpenClaw（本机）
    - 能执行：`openclaw status`
-2. 你有一个 Slack workspace
-3. 你准备使用 **一个 Slack App** 来管理所有 OpenCrew Agent（后续增减 Agent 就是增减频道 + 配置绑定）
+2. 你有一个消息平台（Slack / 飞书 / Discord 任选其一）
+3. 你准备使用 **一个 App/Bot** 来管理所有 OpenCrew Agent（后续增减 Agent 就是增减频道/群组 + 配置绑定）
 
-如果你还没把 Slack 接入 OpenClaw：先完成 [`docs/SLACK_SETUP.md`](docs/SLACK_SETUP.md)。
+如果你还没接入消息平台：
+- Slack → [`docs/SLACK_SETUP.md`](docs/SLACK_SETUP.md)
+- 飞书 → [`docs/FEISHU_SETUP.md`](docs/FEISHU_SETUP.md)
+- Discord → [`docs/DISCORD_SETUP.md`](docs/DISCORD_SETUP.md)
 
 ---
 
@@ -63,12 +66,15 @@ Step 4: 写入 Slack 配置
   把 botToken 和 appToken 写入 channels.slack（Socket Mode）。
 
 Step 5: 合并 Agent 配置
-  读本仓库的 docs/CONFIG_SNIPPET_2026.2.9.md，按其结构把以下增量合并到 openclaw.json：
+  按用户使用的平台，读对应的配置参考文件：
+  - Slack → docs/CONFIG_SNIPPET_2026.2.9.md
+  - 飞书 → docs/CONFIG_SNIPPET_FEISHU.md
+  - Discord → docs/CONFIG_SNIPPET_DISCORD.md
+  按其结构把以下增量合并到 openclaw.json：
   - agents.list（新增 Agent 条目，保留用户原有的 main agent）
-  - bindings（Channel ID → Agent 映射）
-  - channels.slack.channels（allowlist + requireMention）
+  - bindings（频道/群组 → Agent 映射）
+  - channels 白名单（allowlist + requireMention）
   - tools.agentToAgent + session.agentToAgent（A2A 保护）
-  - channels.slack.thread（thread 隔离）
 
 Step 6: 重启并验证
   openclaw gateway restart
@@ -142,14 +148,17 @@ mkdir -p ~/.openclaw/workspace-cto/{scars,patterns}
 > 说明：这里使用 `rsync --ignore-existing` 是为了尽量避免覆盖你已经在用的 workspace 文件。
 ---
 
-## 3. 写入最小增量配置（OpenClaw 2026.2.9）
+## 3. 写入最小增量配置
 
-请按这个文件操作：[`docs/CONFIG_SNIPPET_2026.2.9.md`](docs/CONFIG_SNIPPET_2026.2.9.md)
+按你使用的平台选择对应的配置参考：
+- **Slack** → [`docs/CONFIG_SNIPPET_2026.2.9.md`](docs/CONFIG_SNIPPET_2026.2.9.md)
+- **飞书** → [`docs/CONFIG_SNIPPET_FEISHU.md`](docs/CONFIG_SNIPPET_FEISHU.md)
+- **Discord** → [`docs/CONFIG_SNIPPET_DISCORD.md`](docs/CONFIG_SNIPPET_DISCORD.md)
 
-它包含：
+每个文件都包含：
 - 需要新增的 agents（以及各自 workspace 路径）
-- Slack 频道 bindings（频道=岗位）
-- Slack allowlist（安全：只允许这些频道触发）
+- 平台频道/群组 bindings（频道=岗位）
+- 平台 allowlist（安全：只允许这些频道/群组触发）
 - A2A 保护（maxPingPongTurns / 发起权限 / subagent 禁止 sessions）
 - 回滚方式
 
