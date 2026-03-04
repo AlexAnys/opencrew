@@ -10,6 +10,18 @@ OpenCrew uses the Feishu **WebSocket long connection** by default -- no public s
 
 > Lark (international version) users: see [Lark Section](#lark-international-version-users).
 
+### Key difference from Slack: Thread support
+
+OpenCrew's core model on Slack is "channel = role, thread = task" -- each task runs independently in its own thread with no cross-talk.
+
+Feishu does have a native "Topics" (话题) feature, but **OpenClaw's Feishu plugin does not currently support thread isolation**. This means:
+
+- **"Group chat = role" works perfectly** -- each group binds to one Agent, message routing works as expected
+- **"Thread = task" is not available** -- all conversations within a group are flat; you cannot isolate different tasks into separate threads
+- Practical impact: when an Agent handles multiple tasks concurrently, conversations will intermingle. For light use (one task at a time) this is fine; for heavy parallel workflows it is a noticeable limitation
+
+> This is a known limitation of the OpenClaw Feishu plugin ([Issue #10242](https://github.com/openclaw/openclaw/issues/10242)), not the Feishu platform itself. Future plugin updates may resolve this.
+
 ---
 
 ## What you will have when you are done
