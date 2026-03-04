@@ -12,25 +12,31 @@
 
 1. You can run OpenClaw normally (on your local machine)
    - You can run: `openclaw status`
-2. You have a Slack workspace
-3. You plan to use **one Slack App** to manage all OpenCrew Agents (adding/removing Agents later is just adding/removing channels + config bindings)
+2. You have a messaging platform (Slack / Feishu / Discord -- pick one)
+3. You plan to use **one App/Bot** to manage all OpenCrew Agents (adding/removing Agents later is just adding/removing channels/groups + config bindings)
 
-If you haven't connected Slack to OpenClaw yet: complete [`docs/en/SLACK_SETUP.md`](docs/en/SLACK_SETUP.md) first.
+If you haven't connected a messaging platform to OpenClaw yet:
+- Slack → [`docs/en/SLACK_SETUP.md`](docs/en/SLACK_SETUP.md)
+- Feishu → [`docs/en/FEISHU_SETUP.md`](docs/en/FEISHU_SETUP.md)
+- Discord → [`docs/en/DISCORD_SETUP.md`](docs/en/DISCORD_SETUP.md)
 
 ---
 
-## 1. Create Slack Channels (Roles)
+## 1. Create Channels / Groups (Roles)
 
-We recommend starting with these 7 channels (names are customizable):
-- #hq (CoS)
-- #cto (CTO)
-- #build (Builder)
-- #invest (CIO -- optional, swap in your own domain)
-- #know (KO -- consider enabling requireMention to reduce noise; the open-source edition ships with it off by default, so get things running first)
-- #ops (Ops -- consider enabling requireMention to reduce noise; the open-source edition ships with it off by default, so get things running first)
-- #research (Research -- optional, typically spawn-only)
+Create the following channels or groups on your messaging platform (names are customizable):
+- #hq / HQ group (CoS)
+- #cto / Tech group (CTO)
+- #build / Build group (Builder)
+- #invest / Invest group (CIO -- optional, swap in your own domain)
+- #know / Knowledge group (KO -- consider enabling requireMention to reduce noise; the open-source edition ships with it off by default, so get things running first)
+- #ops / Ops group (Ops -- consider enabling requireMention to reduce noise; the open-source edition ships with it off by default, so get things running first)
+- #research / Research group (Research -- optional, typically spawn-only)
 
-Then invite the bot into each channel: `/invite @<bot>`.
+Then invite the bot:
+- Slack: `/invite @<bot>`
+- Feishu: Group settings → Add bot
+- Discord: Ensure the bot has access to each channel
 
 ---
 
@@ -52,27 +58,37 @@ Step 2: Copy files (see "Method B" bash commands below, use as-is)
   - Create symlink for each workspace: shared → ~/.openclaw/shared
   - Create subdirectories: memory/, ko/inbox, ko/knowledge, cto/scars, cto/patterns
 
-Step 3: Fetch Slack Channel IDs
-  User has provided the Bot Token. Use the Slack API to auto-fetch (don't ask user to copy manually):
-  curl -s -H "Authorization: Bearer <botToken>" \
-    "https://slack.com/api/conversations.list?types=public_channel&limit=200"
-  Match channels where is_member=true by name to get the Channel ID.
-  When user says "#hq → CoS", find the channel with name=hq.
+Step 3: Fetch channel/group IDs
+  Get IDs based on the user's platform:
+  - Slack: User has provided the Bot Token. Use the Slack API to auto-fetch:
+    curl -s -H "Authorization: Bearer <botToken>" \
+      "https://slack.com/api/conversations.list?types=public_channel&limit=200"
+    Match channels where is_member=true by name to get the Channel ID.
+  - Feishu: Use openclaw channels resolve or get chat_id (oc_xxx format) from logs.
+    See docs/en/FEISHU_SETUP.md Step 6.
+  - Discord: Enable Developer Mode, right-click channels to copy IDs, or get from logs.
+    See docs/en/DISCORD_SETUP.md Step 6.
 
-Step 4: Write Slack config
-  Write botToken and appToken into channels.slack (Socket Mode).
+Step 4: Write platform config
+  Write credentials into the platform's channels config:
+  - Slack: botToken + appToken → channels.slack (Socket Mode)
+  - Feishu: appId + appSecret → channels.feishu
+  - Discord: botToken → channels.discord
 
 Step 5: Merge agent config
-  Read docs/en/CONFIG_SNIPPET_2026.2.9.md in this repo, then merge these increments into openclaw.json:
+  Read the config reference matching the user's platform:
+  - Slack → docs/en/CONFIG_SNIPPET_2026.2.9.md
+  - Feishu → docs/en/CONFIG_SNIPPET_FEISHU.md
+  - Discord → docs/en/CONFIG_SNIPPET_DISCORD.md
+  Then merge these increments into openclaw.json:
   - agents.list (add new agent entries, preserve user's existing main agent)
-  - bindings (Channel ID → Agent mapping)
-  - channels.slack.channels (allowlist + requireMention)
+  - bindings (channel/group → Agent mapping)
+  - channels allowlist (allowlist + requireMention)
   - tools.agentToAgent + session.agentToAgent (A2A protection)
-  - channels.slack.thread (thread isolation)
 
 Step 6: Restart and verify
   openclaw gateway restart
-  openclaw status (confirm agent count and Slack status are correct)
+  openclaw status (confirm agent count and platform connection status are correct)
 ```
 
 ### Boundaries (what NOT to do)
@@ -97,20 +113,23 @@ Deploy OpenCrew multi-agent team for me.
 Repo: please clone https://github.com/AlexAnys/opencrew.git to /tmp/opencrew
 (If already downloaded, repo path: <your local path>)
 
-Slack tokens (write to config, do not echo back):
-- Bot Token: <your xoxb- token>
-- App Token: <your xapp- token>
+My platform: <Slack / Feishu / Discord> (pick one)
 
-I've created these channels and invited the bot:
-- #hq → CoS
-- #cto → CTO
-- #build → Builder
+Platform credentials (write to config, do not echo back):
+- Slack: Bot Token (xoxb-) + App Token (xapp-)
+- Feishu: App ID (cli_xxx) + App Secret
+- Discord: Bot Token
+
+I've created these channels/groups and invited the bot:
+- #hq / HQ group → CoS
+- #cto / Tech group → CTO
+- #build / Build group → Builder
 
 Read DEPLOY.en.md in the repo and follow the deployment process.
 Do not touch my models / auth / gateway config — only add the OpenCrew increments.
 ```
 
-Your OpenClaw will read this file and `docs/en/CONFIG_SNIPPET_2026.2.9.md`, then automatically complete: backup, file copy, config merge, restart, and verification.
+Your OpenClaw will read this file and the CONFIG_SNIPPET file for your platform, then automatically complete: backup, file copy, config merge, restart, and verification.
 
 ### Method B: Manual Copy (Transparent, but Requires Some Command Line)
 
@@ -138,14 +157,17 @@ mkdir -p ~/.openclaw/workspace-cto/{scars,patterns}
 
 ---
 
-## 3. Write the Minimal Incremental Config (OpenClaw 2026.2.9)
+## 3. Write the Minimal Incremental Config
 
-Follow this document: [`docs/en/CONFIG_SNIPPET_2026.2.9.md`](docs/en/CONFIG_SNIPPET_2026.2.9.md)
+Choose the config reference for your platform:
+- **Slack** → [`docs/en/CONFIG_SNIPPET_2026.2.9.md`](docs/en/CONFIG_SNIPPET_2026.2.9.md)
+- **Feishu** → [`docs/en/CONFIG_SNIPPET_FEISHU.md`](docs/en/CONFIG_SNIPPET_FEISHU.md)
+- **Discord** → [`docs/en/CONFIG_SNIPPET_DISCORD.md`](docs/en/CONFIG_SNIPPET_DISCORD.md)
 
-It covers:
+Each file covers:
 - New agents to add (and their workspace paths)
-- Slack channel bindings (channel = role)
-- Slack allowlist (security: only these channels can trigger agents)
+- Platform channel/group bindings (channel = role)
+- Platform allowlist (security: only these channels/groups can trigger agents)
 - A2A safeguards (maxPingPongTurns / initiation permissions / subagent session restrictions)
 - How to roll back
 

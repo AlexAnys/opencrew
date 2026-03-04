@@ -224,4 +224,4 @@ Lark 后台不支持 WebSocket 长连接，需要使用 **Webhook 模式** + 公
 
 ---
 
-> 📖 下一步 → [完整上手指南](GETTING_STARTED.md) · [配置参考](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 下一步 → [完整上手指南](GETTING_STARTED.md) · [飞书配置参考](CONFIG_SNIPPET_FEISHU.md)

@@ -182,4 +182,4 @@ OpenCrew 使用 **一个 Bot** 管理所有 Agent（和 Slack 的模式一致）
 
 ---
 
-> 📖 下一步 → [完整上手指南](GETTING_STARTED.md) · [配置参考](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 下一步 → [完整上手指南](GETTING_STARTED.md) · [Discord 配置参考](CONFIG_SNIPPET_DISCORD.md)

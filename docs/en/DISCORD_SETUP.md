@@ -182,4 +182,4 @@ No. The Discord Gateway uses an outbound WebSocket connection -- your computer c
 
 ---
 
-> 📖 Next → [Getting Started](GETTING_STARTED.md) · [Config Reference](CONFIG_SNIPPET_2026.2.9.md)
+> 📖 Next → [Getting Started](GETTING_STARTED.md) · [Discord Config Reference](CONFIG_SNIPPET_DISCORD.md)
