@@ -203,6 +203,69 @@ Have a Feishu admin create the app (admin-created apps are auto-approved), or as
 
 ---
 
+## Advanced: Separate Bot per Agent (Multi-App Mode)
+
+> The default "single bot" mode works for most scenarios. Consider multi-app mode only when:
+> - You want each Agent to have its own name and avatar (visually distinct in group chats)
+> - You need independent API rate-limit quotas (Feishu bills per app)
+> - You need permission isolation (different Agents accessing different data scopes)
+
+### Single Bot vs Multi-Bot comparison
+
+| Dimension | Single Bot (default) | Multi-Bot (advanced) |
+|-----------|---------------------|---------------------|
+| Config complexity | Low (1 app) | Medium (1 app per Agent) |
+| Agent appearance | Shared name & avatar | Independent identity |
+| API quota | Shared | Independent (N x capacity) |
+| Permission isolation | Shared | Independent |
+| Best for | Quick start | Production environments |
+
+### How to configure
+
+1. **Create a separate app for each Agent** -- follow the same [Step 1](#step-1-create-a-feishu-app-and-enable-bot-capability-10-min) ~ [Step 3](#step-3-copy-credentials-and-publish-the-app) for each app
+2. **Use the OpenClaw `accounts` multi-account format:**
+
+```yaml
+channels:
+  feishu:
+    domain: feishu
+    connectionMode: websocket
+    accounts:
+      cos-bot:
+        name: "CoS Chief of Staff"
+        appId: "cli_cos_xxxxx"
+        appSecret: "your-cos-secret"
+        enabled: true
+      cto-bot:
+        name: "CTO Tech Partner"
+        appId: "cli_cto_xxxxx"
+        appSecret: "your-cto-secret"
+        enabled: true
+```
+
+3. **Use `accountId` in Agent bindings to map each Agent to its Bot:**
+
+```yaml
+agents:
+  - name: cos
+    bindings:
+      - channel: feishu
+        accountId: cos-bot
+        peer:
+          kind: group
+          id: "oc_xxx"
+```
+
+### Notes
+
+- Each app needs its own event subscriptions (`im.message.receive_v1`) and permissions (see [Step 2](#step-2-configure-permissions-and-event-subscriptions))
+- In "one group per Agent" mode, add only the corresponding bot to each group to avoid duplicate messages
+- A2A communication is unaffected -- it goes through OpenClaw's internal `sessions_send`, independent of bot count
+
+> For more config examples, see [Feishu Config Reference -- Multi-Account Config](CONFIG_SNIPPET_FEISHU.md#g-multi-account-config-advanced-multi-bot-mode).
+
+---
+
 ## Lark (international version) users
 
 The Lark console does not support WebSocket long connections. You need **Webhook mode** with a public tunnel.
