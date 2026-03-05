@@ -203,6 +203,67 @@ openclaw pairing approve feishu <配对码>
 
 ---
 
+## 进阶：为每个 Agent 配置独立 Bot（多应用模式）
+
+> 默认的"单 Bot"模式已经能满足大多数场景。以下情况才需要多应用模式：
+> - 希望每个 Agent 有独立的名字和头像（在群聊中一眼区分）
+> - 需要独立的 API 限速配额（飞书按应用计费）
+> - 需要权限隔离（不同 Agent 访问不同范围的数据）
+
+### 单 Bot vs 多 Bot 对比
+
+| 维度 | 单 Bot（默认） | 多 Bot（进阶） |
+|------|--------------|---------------|
+| 配置复杂度 | 低（1 个应用） | 中（每 Agent 一个应用） |
+| Agent 外观 | 共享名称和头像 | 各自独立身份 |
+| API 配额 | 共享 | 独立（N 倍容量） |
+| 权限隔离 | 共享 | 独立 |
+| 适用场景 | 快速上手 | 正式生产环境 |
+
+### 配置方式
+
+1. **为每个 Agent 创建独立应用** — 步骤同前面的 [Step 1](#step-1创建飞书应用--开启机器人能力10-分钟) ~ [Step 3](#step-3记下凭证--发布应用)，每个应用对应一个 Agent
+2. **OpenClaw 配置使用 `accounts` 多账户格式：**
+
+```yaml
+channels:
+  feishu:
+    domain: feishu
+    connectionMode: websocket
+    accounts:
+      cos-bot:
+        name: "CoS 幕僚长"
+        appId: "cli_cos_xxxxx"
+        appSecret: "your-cos-secret"
+        enabled: true
+      cto-bot:
+        name: "CTO 技术合伙人"
+        appId: "cli_cto_xxxxx"
+        appSecret: "your-cto-secret"
+        enabled: true
+```
+
+3. **Agent 绑定中使用 `accountId` 指定对应的 Bot：**
+
+```yaml
+agents:
+  - name: cos
+    bindings:
+      - channel: feishu
+        accountId: cos-bot
+        peer:
+          kind: group
+          id: "oc_xxx"
+```
+
+### 注意事项
+
+- 每个应用需独立配置事件订阅（`im.message.receive_v1`）和权限（参考 [Step 2](#step-2配置权限--事件订阅)）
+- "一群一 Agent"模式下，每个群只添加对应的 bot，避免消息重复
+- A2A 通信不受影响 — 走 OpenClaw 内部 `sessions_send`，与 bot 数量无关
+
+---
+
 ## Lark（国际版）用户
 
 Lark 后台不支持 WebSocket 长连接，需要使用 **Webhook 模式** + 公网隧道。
