@@ -262,8 +262,6 @@ agents:
 - In "one group per Agent" mode, add only the corresponding bot to each group to avoid duplicate messages
 - A2A communication is unaffected -- it goes through OpenClaw's internal `sessions_send`, independent of bot count
 
-> For more config examples, see [Feishu Config Reference -- Multi-Account Config](CONFIG_SNIPPET_FEISHU.md#g-multi-account-config-advanced-multi-bot-mode).
-
 ---
 
 ## Lark (international version) users

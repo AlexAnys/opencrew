@@ -262,8 +262,6 @@ agents:
 - "一群一 Agent"模式下，每个群只添加对应的 bot，避免消息重复
 - A2A 通信不受影响 — 走 OpenClaw 内部 `sessions_send`，与 bot 数量无关
 
-> 更多配置示例见 [飞书配置参考 — 多账户配置](CONFIG_SNIPPET_FEISHU.md#g-多账户配置进阶多-bot-模式)。
-
 ---
 
 ## Lark（国际版）用户
