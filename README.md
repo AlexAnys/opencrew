@@ -81,13 +81,15 @@ OpenCrew 分为三层，每层职责清晰：
 
 ### 选择你的平台
 
-| 平台 | 接入指南 | Thread（任务隔离） | 适合谁 |
-|------|---------|-------------------|--------|
-| **Slack** | [Slack 接入指南](docs/SLACK_SETUP.md) | ✅ 完整支持 | 已使用 Slack 的团队 |
-| **飞书** | [飞书接入指南](docs/FEISHU_SETUP.md) | ⚠️ 暂不支持（[详情](docs/FEISHU_SETUP.md#与-slack-的关键差异thread话题)） | 国内团队 / 飞书用户 |
-| **Discord** | [Discord 接入指南](docs/DISCORD_SETUP.md) | ✅ 完整支持 | 开发者社区 / Discord 用户 |
+| 平台 | 接入指南 | Thread（任务隔离） | Agent 独立身份 | 适合谁 |
+|------|---------|-------------------|---------------|--------|
+| **Slack** | [Slack 接入指南](docs/SLACK_SETUP.md) | ✅ 完整支持 | — 单 Bot 共享身份 | 已使用 Slack 的团队 |
+| **飞书** | [飞书接入指南](docs/FEISHU_SETUP.md) | ⚠️ 暂不支持（[详情](docs/FEISHU_SETUP.md#与-slack-的关键差异thread话题)） | ✅ 可为每个 Agent 配独立 Bot（[进阶](docs/FEISHU_SETUP.md)） | 国内团队 / 飞书用户 |
+| **Discord** | [Discord 接入指南](docs/DISCORD_SETUP.md) | ✅ 完整支持 | ✅ 独立 Bot 或 Webhook Relay（[进阶](docs/DISCORD_SETUP.md)） | 开发者社区 / Discord 用户 |
 
-> 三个平台的核心模型一致：**一个 bot/应用** 加入多个频道/群组，每个频道/群组绑定一个 Agent。
+> **默认：单 Bot 模式** — 一个 bot/应用加入多个频道/群组，通过频道路由到不同 Agent。三个平台通用，配置最简单。
+> **进阶：独立身份** — 飞书和 Discord 支持为每个 Agent 创建独立 Bot（独立名称、头像、API 配额）。Discord 还支持 Webhook Relay（单 Bot 接收 + 不同身份回复）。详见各平台指南的"进阶"章节。
+>
 > 完成平台接入后，回到下面的 Step 1 继续。以下以 Slack 为例展示完整流程，飞书和 Discord 的操作步骤对等。
 
 ### Step 1：创建频道/群组 + 邀请 bot

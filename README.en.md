@@ -75,13 +75,15 @@ KO (Knowledge Officer) distills reusable knowledge from all outputs. Ops (Operat
 
 ### Choose Your Platform
 
-| Platform | Setup Guide | Thread (task isolation) | Best for |
-|----------|------------|------------------------|----------|
-| **Slack** | [Slack Setup Guide](docs/en/SLACK_SETUP.md) | ✅ Full support | Teams already using Slack |
-| **Feishu** | [Feishu Setup Guide](docs/en/FEISHU_SETUP.md) | ⚠️ Not yet supported ([details](docs/en/FEISHU_SETUP.md#key-difference-from-slack-thread-support)) | Teams in China / Feishu users |
-| **Discord** | [Discord Setup Guide](docs/en/DISCORD_SETUP.md) | ✅ Full support | Developer communities / Discord users |
+| Platform | Setup Guide | Thread (task isolation) | Agent Identity | Best for |
+|----------|------------|------------------------|---------------|----------|
+| **Slack** | [Slack Setup Guide](docs/en/SLACK_SETUP.md) | ✅ Full support | — Single bot, shared identity | Teams already using Slack |
+| **Feishu** | [Feishu Setup Guide](docs/en/FEISHU_SETUP.md) | ⚠️ Not yet supported ([details](docs/en/FEISHU_SETUP.md#key-difference-from-slack-thread-support)) | ✅ Separate bot per agent ([advanced](docs/en/FEISHU_SETUP.md)) | Teams in China / Feishu users |
+| **Discord** | [Discord Setup Guide](docs/en/DISCORD_SETUP.md) | ✅ Full support | ✅ Separate bot or webhook relay ([advanced](docs/en/DISCORD_SETUP.md)) | Developer communities / Discord users |
 
-> All three platforms share the same core model: **one bot/app** joins multiple channels/groups, each channel/group binds to one Agent.
+> **Default: Single Bot** — One bot/app joins multiple channels/groups, routing to different agents by channel. Works on all three platforms with the simplest setup.
+> **Advanced: Independent Identity** — Feishu and Discord support creating a separate bot per agent (unique name, avatar, API quota). Discord also offers webhook relay (single bot receives + replies with different identities). See the "Advanced" section in each platform's guide.
+>
 > After completing platform setup, come back to Step 1 below. The walkthrough uses Slack as an example — Feishu and Discord steps are equivalent.
 
 ### Step 1: Create Channels/Groups + Invite Bot
