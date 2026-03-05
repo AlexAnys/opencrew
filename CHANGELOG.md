@@ -4,6 +4,30 @@ All notable changes to this repository will be documented in this file.
 
 The format is loosely based on Keep a Changelog.
 
+## [0.2.2] — 2026-03-05
+
+OpenCrew 从 Slack 专属扩展为三平台支持，并为飞书和 Discord 提供了独立 Bot 身份方案。
+
+### Added — 多平台支持
+- **飞书接入指南** `docs/FEISHU_SETUP.md` (zh + en): 从零创建飞书自建应用、配置权限和事件订阅、群组绑定，含 Lark 国际版指引
+- **Discord 接入指南** `docs/DISCORD_SETUP.md` (zh + en): 创建 Discord Application + Bot、Gateway Intent 配置、频道绑定，含 Thread 使用说明
+- **平台配置参考** `docs/CONFIG_SNIPPET_FEISHU.md` / `CONFIG_SNIPPET_DISCORD.md` (zh + en): 可直接合并到 `openclaw.json` 的配置片段
+
+### Added — 独立 Bot 身份（飞书 & Discord 进阶）
+- **飞书多应用模式**: 为每个 Agent 创建独立飞书应用，利用 OpenClaw 原生 `accounts` 多账户配置实现独立身份、独立 API 配额和权限隔离
+- **Discord Bot 身份方案**: 三种方案对比（单 Bot / Webhook Relay / 多 Bot），含各自适用场景和限制说明
+- **README 平台选择表**: 新增"Agent 独立身份"列，一目了然三个平台的 Bot 模式差异
+
+### Changed
+- **README** (zh + en): tagline 改为"支持 Slack·飞书·Discord"，10 分钟上手新增平台选择表和三平台部署提示词
+- **DEPLOY.md** (zh + en): Step 3-5 扩展为三平台（Channel/Group ID 获取、平台配置写入、bindings 适配）
+- **AGENT_ONBOARDING.md** (zh + en): 频道对照表扩展为三平台，"Slack 频道=工位"改为"频道/群组=工位"
+
+### Design Principle
+- 三个平台共享同一套 Agent 协议（shared/）和工作区结构（workspaces/），仅渠道层配置不同
+- 独立 Bot 模式作为"进阶"章节增量补充，不改变默认的单 Bot 部署流程
+- 配置参考文件（CONFIG_SNIPPET）保持单 Bot 模式，避免高风险的 copy-paste 误操作
+
 ## [0.2.0] — 2026-02-27
 
 ### Added
