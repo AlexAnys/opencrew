@@ -144,6 +144,35 @@ openclaw channels resolve --channel discord "#hq" --json
 
 ---
 
+## Advanced: Bot Identity Options
+
+By default, OpenCrew uses a single bot for all agents, with each agent distinguished by its channel. If you want different agents to appear with different names and avatars, Discord supports three approaches:
+
+| Approach | Complexity | Agent Appearance | Slash Commands | Best For |
+|----------|-----------|-----------------|----------------|----------|
+| Single Bot (default) | Low | Uniform | Shared | Quick start |
+| Webhook Relay | Medium | Different name/avatar | Not supported | Visual distinction |
+| Multi-Bot | High | Fully independent | Independent | Full experience |
+
+### Webhook Relay
+
+A single bot receives and processes messages, but replies via channel webhooks with different names and avatars. Open-source implementations are available (e.g. [openclaw-discord-spoof-avatar](https://github.com/Yvvvan/openclaw-discord-spoof-avatar)).
+
+Limitations: webhooks can only send (not receive), do not support slash commands, and have no online status indicator.
+
+### Multi-Bot
+
+Create a separate Discord Application for each agent. Each bot gets its own identity, slash commands, and rate limits.
+
+Things to keep in mind:
+- Each bot must be invited to the server individually
+- Bots in more than 75 servers require a separate Message Content Intent approval
+- OpenClaw multi-account support is still in development -- see [PR #3672](https://github.com/open-claw/open-claw/pull/3672)
+
+> **Tip**: Discord servers allow up to 50 bots. OpenCrew's 7 agents are well within this limit. For most users, a single bot with channel routing is sufficient.
+
+---
+
 ## FAQ
 
 ### Bot not responding to messages?
@@ -166,7 +195,7 @@ Threads auto-archive after a period of inactivity (1 day / 3 days / 7 days). Arc
 
 ### One bot or multiple bots?
 
-OpenCrew uses **one bot** for all agents (same model as Slack). Different agents are distinguished by different channels.
+OpenCrew defaults to **one bot** for all agents (same model as Slack). If you need different agents to have distinct appearances, see [Advanced: Bot Identity Options](#advanced-bot-identity-options) above.
 
 ### Do I need a VPS / public server?
 
