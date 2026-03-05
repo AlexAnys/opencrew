@@ -121,13 +121,13 @@ Discord 使用 Guild ID + Channel ID 的路由模型。每条 binding 指定一�
 ```json
 {
   "bindings": [
-    { "agentId": "cos", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_HQ>" } },
-    { "agentId": "cto", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_CTO>" } },
-    { "agentId": "builder", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_BUILD>" } },
-    { "agentId": "cio", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_INVEST>" } },
-    { "agentId": "ko", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_KNOW>" } },
-    { "agentId": "ops", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_OPS>" } },
-    { "agentId": "research", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "channelId": "<DISCORD_CHANNEL_ID_RESEARCH>" } }
+    { "agentId": "cos", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_HQ>" } } },
+    { "agentId": "cto", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_CTO>" } } },
+    { "agentId": "builder", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_BUILD>" } } },
+    { "agentId": "cio", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_INVEST>" } } },
+    { "agentId": "ko", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_KNOW>" } } },
+    { "agentId": "ops", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_OPS>" } } },
+    { "agentId": "research", "match": { "channel": "discord", "guildId": "<DISCORD_GUILD_ID>", "peer": { "kind": "channel", "id": "<DISCORD_CHANNEL_ID_RESEARCH>" } } }
   ]
 }
 ```
