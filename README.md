@@ -83,7 +83,7 @@ OpenCrew 分为三层，每层职责清晰：
 
 | 平台 | 接入指南 | Thread（任务隔离） | Agent 独立身份 | 适合谁 |
 |------|---------|-------------------|---------------|--------|
-| **Slack** | [Slack 接入指南](docs/SLACK_SETUP.md) | ✅ 完整支持 | — 单 Bot 共享身份 | 已使用 Slack 的团队 |
+| **Slack** | [Slack 接入指南](docs/SLACK_SETUP.md) | ✅ 完整支持 | — 单 Bot 共享身份 | 最灵活便捷部署体验 |
 | **飞书** | [飞书接入指南](docs/FEISHU_SETUP.md) | ⚠️ 暂不支持（[详情](docs/FEISHU_SETUP.md#与-slack-的关键差异thread话题)） | ✅ 可为每个 Agent 配独立 Bot（[进阶](docs/FEISHU_SETUP.md)） | 国内团队 / 飞书用户 |
 | **Discord** | [Discord 接入指南](docs/DISCORD_SETUP.md) | ✅ 完整支持 | ✅ 独立 Bot 或 Webhook Relay（[进阶](docs/DISCORD_SETUP.md)） | 开发者社区 / Discord 用户 |
 
