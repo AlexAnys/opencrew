@@ -144,6 +144,35 @@ openclaw channels resolve --channel discord "#hq" --json
 
 ---
 
+## 进阶：Bot 身份方案选择
+
+默认情况下，OpenCrew 使用一个 Bot 管理所有 Agent，不同 Agent 通过频道区分。如果你希望不同 Agent 呈现不同的名称和头像，Discord 支持以下三种方案：
+
+| 方案 | 复杂度 | Agent 外观 | Slash Commands | 适用场景 |
+|------|--------|-----------|----------------|---------|
+| 单 Bot（默认） | 低 | 统一 | 共享 | 快速上手 |
+| Webhook Relay | 中 | 不同名称/头像 | 不支持 | 需视觉区分 |
+| 多 Bot | 高 | 完全独立 | 独立 | 完整体验 |
+
+### Webhook Relay
+
+单 Bot 接收消息并处理逻辑，但通过频道 Webhook 以不同名称和头像回复。已有开源实现可参考（如 [openclaw-discord-spoof-avatar](https://github.com/Yvvvan/openclaw-discord-spoof-avatar)）。
+
+限制：Webhook 只能发送不能接收，不支持 slash commands，也没有在线状态显示。
+
+### 多 Bot
+
+为每个 Agent 创建独立的 Discord Application，每个 Bot 拥有独立身份、slash commands 和 rate limits。
+
+注意事项：
+- 每个 Bot 需要单独邀请到服务器
+- 超过 75 个服务器的 Bot 需要单独申请 Message Content Intent 审批
+- OpenClaw 多账户支持仍在开发中，参考 [PR #3672](https://github.com/open-claw/open-claw/pull/3672)
+
+> **提示**：Discord 服务器最多 50 个 Bot，OpenCrew 的 7 个 Agent 远低于此限制。对于大多数用户，单 Bot + 频道路由已经足够。
+
+---
+
 ## 常见问题
 
 ### Bot 不回复消息？
@@ -166,7 +195,7 @@ Discord 的线程对应 OpenCrew 的"任务/会话"概念。Agent 在频道中�
 
 ### 一个 Bot 还是多个 Bot？
 
-OpenCrew 使用 **一个 Bot** 管理所有 Agent（和 Slack 的模式一致）。不同 Agent 通过不同频道区分。
+OpenCrew 默认使用 **一个 Bot** 管理所有 Agent（和 Slack 的模式一致）。如果需要不同 Agent 呈现不同外观，参见上方 [进阶：Bot 身份方案选择](#进阶bot-身份方案选择)。
 
 ### 需要服务器（VPS）吗？
 
