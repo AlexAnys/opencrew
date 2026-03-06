@@ -235,6 +235,8 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 ### 让你的 Agent 自动完成 A2A 设置
 
+> ⚠️ **首次设置提醒**：A2A 闭环流程中，Agent 会检查并补全 `openclaw.json` 的 A2A 配置（如 `agentToAgent.allow`、`maxPingPongTurns`）。配置变更会**自动触发 OpenClaw gateway 重启**，导致所有 Agent 的当前会话短暂中断。这是正常的一次性设置过程——重启完成后 Agent 会自动恢复，你只需要重新发起验证步骤即可。
+
 把下面这段发给你的任一 Agent（推荐 **Ops**，也可以是 **CTO** 或 **CoS**）：
 
 ```
