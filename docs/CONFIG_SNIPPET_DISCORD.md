@@ -1,5 +1,3 @@
-**中文** | [English](en/CONFIG_SNIPPET_DISCORD.md)
-
 > 📖 [README](../README.md) → [Discord 接入指南](DISCORD_SETUP.md) → **Discord 配置参考**
 
 # OpenCrew Discord 最小增量配置

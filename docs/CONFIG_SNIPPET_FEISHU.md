@@ -1,5 +1,3 @@
-**中文** | [English](en/CONFIG_SNIPPET_FEISHU.md)
-
 > 📖 [README](../README.md) → [飞书接入指南](FEISHU_SETUP.md) → **飞书配置参考**
 
 # OpenCrew 飞书最小增量配置

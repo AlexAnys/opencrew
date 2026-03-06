@@ -1,5 +1,3 @@
-**中文** | [English](en/CONFIG_SNIPPET_2026.2.9.md)
-
 > 📖 [README](../README.md) → [完整上手指南](GETTING_STARTED.md) → **配置参考**
 
 # OpenClaw 2026.2.9 — OpenCrew 最小增量配置
