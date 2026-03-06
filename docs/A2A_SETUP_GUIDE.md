@@ -250,7 +250,7 @@ WAIT: 等待 CTO 指令
 ## 6. 常见问题
 
 **Q：配置改完需要重启吗？**
-A：用 `config.patch` 会自动重启。手动编辑需要 `openclaw gateway restart`。
+A：用 `config.patch` 会自动重启。手动编辑需要 `openclaw gateway restart`。⚠️ **注意**：gateway 重启会中断所有 Agent 的当前会话。首次 A2A 设置时这是预期行为（一次性），重启后 Agent 会自动恢复。如果 Agent 在设置过程中"突然停止工作"，大概率是重启导致的——等恢复后重新发起验证即可。
 
 **Q：Builder 在 thread 里没回复怎么办？**
 A：检查 `bindings` 是否正确、频道是否 `allow: true`、Builder 的 session 是否绑定了 Slack（而非 webchat）。

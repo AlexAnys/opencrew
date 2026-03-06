@@ -218,7 +218,7 @@ Task is not done until: Builder closeout ✅ → CTO local verify ✅ → **Repo
 ## 6. FAQ
 
 **Q: Do I need to restart after config changes?**
-A: `config.patch` auto-restarts. Manual edits need `openclaw gateway restart`.
+A: `config.patch` auto-restarts. Manual edits need `openclaw gateway restart`. ⚠️ **Note**: A gateway restart interrupts all Agent sessions. During first-time A2A setup this is expected (one-time) — Agents recover automatically after restart. If your Agent "suddenly stops working" during setup, it's likely due to the restart. Just re-trigger the validation steps after recovery.
 
 **Q: Builder doesn't reply in the thread?**
 A: Check `bindings`, channel `allow: true`, and whether Builder's session is bound to Slack (not webchat).

@@ -229,6 +229,8 @@ You give CTO a dev task in `#cto` → CTO automatically dispatches to Builder in
 
 ### Let Your Agent Handle A2A Setup
 
+> ⚠️ **First-time setup note**: During the A2A setup flow, the Agent will check and update `openclaw.json` A2A settings (e.g. `agentToAgent.allow`, `maxPingPongTurns`). Config changes **automatically trigger an OpenClaw gateway restart**, which briefly interrupts all Agent sessions. This is a normal one-time setup step — after restart, Agents recover automatically and you just need to re-trigger the validation steps.
+
 Send this to any Agent (recommended: **Ops**, or **CTO** / **CoS**):
 
 ```
