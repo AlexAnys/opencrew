@@ -86,6 +86,13 @@ Step 5: 合并 Agent 配置
   - channels 白名单（allowlist + requireMention）
   - tools.agentToAgent + session.agentToAgent（A2A 保护）
 
+Step 5.1: (可选) 集成 Novita LLM Provider
+  如果用户提供了 `NOVITA_API_KEY`，在 `models.providers` 中添加 Novita：
+  - 类型: `openai`
+  - Base URL: `https://api.novita.ai/openai`
+  - API Key: `${NOVITA_API_KEY}`
+  详细配置见：docs/CONFIG_SNIPPET_NOVITA.md
+
 Step 6: 重启并验证
   openclaw gateway restart
   openclaw status（确认 Agent 数量和平台连接状态正常）

@@ -4,6 +4,14 @@ All notable changes to this repository will be documented in this file.
 
 The format is loosely based on Keep a Changelog.
 
+## [0.2.3] — 2026-03-07
+
+新增 Novita LLM Provider 支持。
+
+### Added — LLM Provider
+- **Novita LLM Provider 配置参考** `docs/CONFIG_SNIPPET_NOVITA.md` (zh + en): 使用 OpenAI 兼容模式接入 Novita，支持通过 `NOVITA_API_KEY` 环境变量配置。
+- **README / DEPLOY 更新**: 在部署提示词和执行流程中新增 Novita 可选步骤。
+
 ## [0.2.2] — 2026-03-05
 
 OpenCrew 从 Slack 专属扩展为三平台支持，并为飞书和 Discord 提供了独立 Bot 身份方案。

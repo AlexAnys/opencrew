@@ -118,13 +118,17 @@ Slack tokens（请写入配置，不要回显）：
 - Bot Token: <你的 xoxb- token>
 - App Token: <你的 xapp- token>
 
+(可选) Novita LLM Provider:
+- NOVITA_API_KEY: <你的 API Key>
+
 我已创建以下频道并邀请了 bot：
 - #hq → CoS
 - #cto → CTO
 - #build → Builder
 
 请读仓库里的 DEPLOY.md，按流程完成部署。
-不要改我的 models / auth / gateway 配置，只做 OpenCrew 的增量。
+(可选) 如果我提供了 NOVITA_API_KEY，请在 models.providers 中添加 Novita (OpenAI-compatible, Base URL: https://api.novita.ai/openai)。
+不要改我的 models / auth / gateway 其他配置，只做 OpenCrew 的增量。
 ```
 
 你的 OpenClaw 会自动完成：备份现有配置 → 复制 Agent 文件 → 获取 Channel ID → 合并配置 → 重启。

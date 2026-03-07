@@ -112,12 +112,16 @@ Slack tokens (write to config, do not echo back):
 - Bot Token: <your xoxb- token>
 - App Token: <your xapp- token>
 
+(Optional) Novita LLM Provider:
+- NOVITA_API_KEY: <your API Key>
+
 I've created these channels and invited the bot:
 - #hq → CoS
 - #cto → CTO
 - #build → Builder
 
 Read DEPLOY.en.md in the repo and follow the deployment process.
+(Optional) If I provided NOVITA_API_KEY, please add Novita to models.providers (OpenAI-compatible, Base URL: https://api.novita.ai/openai).
 Do not touch my models / auth / gateway config — only add the OpenCrew increments.
 ```
 

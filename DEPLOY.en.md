@@ -86,6 +86,12 @@ Step 5: Merge agent config
   - channels allowlist (allowlist + requireMention)
   - tools.agentToAgent + session.agentToAgent (A2A protection)
 
+Step 5.1: (Optional) Integrate Novita LLM Provider
+  If the user provides `NOVITA_API_KEY`, add Novita as an OpenAI-compatible provider:
+  - Base URL: `https://api.novita.ai/openai`
+  - API Key: `${NOVITA_API_KEY}`
+  Details: docs/en/CONFIG_SNIPPET_NOVITA.md
+
 Step 6: Restart and verify
   openclaw gateway restart
   openclaw status (confirm agent count and platform connection status are correct)
