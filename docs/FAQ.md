@@ -57,6 +57,16 @@ Slack 的产品特性天然匹配多 Agent 协作：Thread 提供任务级隔离
 
 ## 使用问题
 
+### 频道里 Agent 回复时混入了之前不相关的对话上下文？
+
+同一频道的所有 root message 默认共用一个 session，idle 超时可能很长（数天），导致不同话题的上下文互相污染。
+
+**推荐方案**：在 `openclaw.json` 的 `session.resetByType` 中将 `group` 的 `idleMinutes` 设为 `5`（5 分钟），同时保持 `dm` 和 `thread` 为 `43200`（30 天）。这样频道 session 在 5 分钟无活动后自动重置，而 DM 和 Thread 保持长上下文连续性。
+
+> Slack channel 和 group DM 在 OpenClaw 内部统一归类为 `"group"` 类型。
+
+详细配置示例 → [Slack 接入指南 - 频道 Session 自动隔离](SLACK_SETUP.md#推荐配置频道-session-自动隔离)
+
 ### Token 消耗会很高吗？
 
 会比单 Agent 多，因为每个 Agent 有独立上下文。但两个因素降低实际成本：

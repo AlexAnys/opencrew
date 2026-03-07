@@ -125,6 +125,58 @@ openclaw channels resolve --channel slack "#hq" --json
 
 ---
 
+## 推荐配置：频道 Session 自动隔离
+
+### 问题
+
+默认情况下，同一个 Slack 频道里所有消息共用一个 session，且 idle 超时很长（默认数天）。这意味着你在 `#cto` 频道先聊了一个技术方案，过了一小时又聊另一个完全不同的话题——AI 仍然带着上一个话题的完整上下文在回复，导致**上下文污染**和**token 浪费**。
+
+Thread 内的对话不受影响（每个 thread 有独立 session），但频道级的 root message 会互相干扰。
+
+### 解决方案
+
+在 `openclaw.json` 的 `session` 中按类型设置不同的 idle 超时：
+
+```jsonc
+"session": {
+  "reset": {
+    "mode": "idle",
+    "idleMinutes": 43200          // 全局默认 30 天
+  },
+  "resetByType": {
+    "group": {
+      "mode": "idle",
+      "idleMinutes": 5            // 频道/群聊：5 分钟后自动重置
+    },
+    "dm": {
+      "mode": "idle",
+      "idleMinutes": 43200        // DM：30 天，保持长上下文
+    },
+    "thread": {
+      "mode": "idle",
+      "idleMinutes": 43200        // Thread：30 天，保持任务连续性
+    }
+  }
+}
+```
+
+**效果**：频道里超过 5 分钟没有新消息，下一条消息会开启全新 session，不再携带旧上下文。DM 和 Thread 不受影响，保持 30 天的长上下文。
+
+> **技术细节**：OpenClaw 内部将 Slack channel（session key 含 `:channel:`）和 group DM（含 `:group:`）统一归类为 `"group"` 类型，因此设置 `resetByType.group` 即可同时覆盖两者。这不会影响 Thread 和 DM 的 session 策略。
+
+### 什么时候需要这个配置？
+
+- 你在同一个频道里讨论多个不相关的话题
+- Agent 回复时引用了很久之前的无关对话
+- 你使用 OpenCrew 的多频道架构（每个频道绑定一个 Agent）
+
+### 不需要这个配置的场景
+
+- 你只用 DM 和 Thread 与 Agent 交流
+- 频道内的对话始终围绕同一个主题
+
+---
+
 ## 参考
 
 - [OpenClaw Slack 集成文档](https://docs.openclaw.ai/zh-CN/channels/slack)

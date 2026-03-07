@@ -313,6 +313,10 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 ## 常见问题
 
+**Q：频道里 Agent 总是混淆不同话题的上下文？**
+
+这是因为同一频道的所有 root message 共用一个 session，默认超时很长。解决方案：在 `session.resetByType` 中将 `group` 的 idle 超时设为 5 分钟，DM 和 Thread 保持 30 天。详见 → [Slack 接入指南 - 频道 Session 自动隔离](docs/SLACK_SETUP.md#推荐配置频道-session-自动隔离)
+
 **Q：我需要会写代码吗？**
 
 不需要。OpenCrew 由一个经济学/MBA 背景的非技术用户设计和部署。你需要的是能敲几行命令行——或者直接让你现有的 OpenClaw 帮你执行部署命令。
