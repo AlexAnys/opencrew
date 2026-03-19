@@ -16,7 +16,7 @@
 
 ## 📢 Status Update (March 2026)
 
-OpenCrew hasn't been updated for a while. **The project is alive, and the direction hasn't changed.**
+Thanks to everyone who's been following OpenCrew — the project hasn't been updated for a while, but this is an architecture I use daily. **The project is alive, and the direction hasn't changed.** Updates will come when the time is right, and I welcome Issues with your feedback and feature requests.
 
 OpenCrew is still early-stage, and many implementations aren't as efficient as they should be. But the core goal remains clear: **help everyone manage a multi-agent team that collaborates organically and iterates reliably.**
 
