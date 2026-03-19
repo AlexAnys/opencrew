@@ -24,9 +24,11 @@ What I'm currently working on: merging kanban-style project management with chat
 
 From my own experience so far, **Slack remains the best interface for multi-agent management.** I'm running 17 Agents across two machines in a single Workspace, and it's already smooth. Slack's upcoming Activity page (an email inbox-like list view) is a great fit for batch-processing Agent notifications.
 
-I believe most of you following this repo already have deep experience with Agent and AI collaboration, and are looking to create greater value in your work and life through multi-agent systems. Building on that, many of you are probably also thinking about a deeper question: **how to truly leverage Coding Agents to build production-grade applications — not just spin up a demo with tools like Lovable.** My other project **[Agent-First Development](https://github.com/AlexAnys/agent-first-dev)** is focused on exactly that — for builders from non-technical or full-stack backgrounds, with a curriculum drawing from Stanford and Chicago Booth courses. Also under active development — feel free to follow along.
+I believe most of you following this repo already have deep experience with Agent and AI collaboration, and are looking to create greater value in your work and life through multi-agent systems.
 
 **Thanks for your patience. The next update isn't far off.**
+
+> 💡 Behind tools like OpenClaw lies a fundamental shift in Coding Agent and AI engineering capabilities. If you want to experience that power more directly — build your own production-grade applications, no technical background required — check out **[Agent-First Development](https://github.com/AlexAnys/agent-first-dev)** (based on Stanford and Chicago Booth courses, designed for non-technical domain experts, under active development).
 
 ---
 

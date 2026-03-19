@@ -24,9 +24,11 @@ OpenCrew 还在早期，很多实现方式还不够高效，但核心目标始�
 
 就我个人体感来说，**Slack 目前仍是多 Agent 管理的最优解。** 我在一个 Workspace 管理两台设备上的 17 个 Agent，体验已经很流畅。Slack 即将上线的 Activity 页面（类似邮件收件箱）非常适合批量处理 Agent 通知。
 
-我相信关注这个仓库的同学，大多已经有了深度的 Agent 和 AI 协作经验，并且希望利用多 Agent 在工作和生活中创造更大的价值。在这个基础上，可能不少人也在思考一个更进一步的问题：**如何真正发挥 Coding Agent 的能力去打造生产级应用，而不只是用 Lovable 之类的工具做一个 demo。** 我最近在做的另一个项目 **[Agent-First Development](https://github.com/AlexAnys/agent-first-dev)** 就围绕这个方向——面向非技术或全栈背景的构建者，内容框架参考 Stanford 和 Chicago Booth 的相关课程，同样在持续开发中，欢迎关注。
+我相信关注这个仓库的同学，大多已经有了深度的 Agent 和 AI 协作经验，并且希望利用多 Agent 在工作和生活中创造更大的价值。
 
 **感谢每一位关注者的耐心。下一个更新不远了。**
+
+> 💡 大家用上 OpenClaw 这类工具的背后，是 Coding Agent 和 AI 工程能力的一次质变。如果你想更自由地直接体验这种能力——打造自己的生产级应用，不需要任何技术背景——欢迎关注 **[Agent-First Development](https://github.com/AlexAnys/agent-first-dev)**（基于 Stanford 和 Chicago Booth 课程，专为非技术背景的领域专家设计，持续更新中）。
 
 ---
 
