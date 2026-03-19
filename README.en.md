@@ -14,6 +14,22 @@
 
 ---
 
+## 📢 Status Update (March 2026)
+
+OpenCrew hasn't been updated for a while. The short version: **the project is alive, and the direction hasn't changed.**
+
+To be candid — OpenCrew is still early-stage, and many of its current implementations are roundabout and less efficient than they should be. But the core goal remains clear: **help everyone manage a multi-agent team that collaborates organically and iterates reliably.** I believe most of you following this repo already have hands-on experience with personal AI agents — and that's exactly the audience OpenCrew is built for.
+
+What I'm currently working on: merging kanban-style project management with chat interfaces, intelligent Agent Onboarding (distilling selection methodology from the ocean of open-source Agents and Skills so the system can auto-provision new Agents), architecture simplification (A2A currently relies on patch-level workarounds — tracking OpenClaw upstream for system-level support), and exploring memory management systems better suited for multi-agent architectures. I'm testing new tech across all fronts, but I don't want to ship unvalidated stopgap solutions — the open-source ecosystem is evolving fast, and I'll push a quality update when the time is right.
+
+One practice worth sharing: **Slack remains the best interface for multi-agent management.** I'm running 17 Agents across two machines in a single Workspace, and it's already smooth. Slack's upcoming Activity page (an email inbox-like list view) is a great fit for batch-processing Agent notifications.
+
+I'm also working on a new project: **[Building Production Apps with Coding Agents](https://github.com/AlexAnys/agent-first-dev)** — for builders from non-technical or full-stack backgrounds. The curriculum draws from Stanford and Chicago Booth courses. Also under active development — feel free to follow along.
+
+**Thanks for your patience. The next major update isn't far off.**
+
+---
+
 ## Table of Contents
 
 - [What Problem Does This Solve](#what-problem-does-this-solve)
