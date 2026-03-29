@@ -119,6 +119,51 @@ Builder -> Cannot assign tasks (receives and executes only)
 CIO -> Operates independently (syncs with CoS when needed)
 ```
 
+### Two A2A Modes: Delegation and Discussion
+
+The two-step trigger described above is the **Delegation** mode -- one Agent hands a structured task to another via `sessions_send`. This is the foundation of A2A, supported on all platforms, with a clear one-directional flow.
+
+v2 introduces a second mode: **Discussion**. A small number of high-value Agents (e.g., CoS) get their own independent Slack App, then join other Agents' channels to collaborate in real-time. [Pending POC Verification]
+
+**Core idea: selective independence.** Not every Agent needs its own App -- execution-layer Agents (CTO, Builder, CIO, etc.) keep sharing one Slack App. Only Agents that need cross-domain collaboration (like CoS, who represents the user and drives strategy) get their own App, then get invited into target channels for direct conversation.
+
+**When to use which?**
+
+| | Delegation | Discussion [Pending POC Verification] |
+|--|------------|---------------------------------------|
+| Scenario | "CTO assigns a specific task to Builder" | "CoS walks into #cto to discuss the approach with CTO, then checks with Builder in #build" |
+| Trigger | `sessions_send` | @mention / direct message |
+| Directionality | One-way, one-to-one | Multi-directional, many-to-many |
+| Platform | Slack / Discord / Feishu | Slack only (requires independent App) |
+
+The two modes coexist -- they do not replace each other. Delegation is for "assign the work." Discussion is for "think it through together."
+
+**Why Discussion?** Delegation is task distribution: CTO says what to do, Builder executes. But real teams don't just assign tasks -- they discuss. CoS walks into CTO's office and asks "what do you think about this direction?", CTO says "technically feasible but expensive", CoS then asks Builder "how long would this take?". Discussion mode lets Agents work the same way -- CoS-Bot gets invited into #cto and talks directly on CTO's home turf. You can watch in real-time and intervene at any point.
+
+### Platform Capability Comparison
+
+| Capability | Slack | Discord | Feishu |
+|------------|-------|---------|--------|
+| Delegation (sessions_send) | YES | YES | YES |
+| Discussion (cross-bot) | Pending POC Verification | Not supported (OpenClaw code-level bug) | Not supported (platform limitation) |
+| Thread / Topic isolation | Native thread | Thread (auto-archive) | groupSessionScope (>= 2026.3.1) |
+
+**Why can't Discord and Feishu support Discussion?**
+
+- **Discord**: The platform itself supports cross-bot message visibility, but OpenClaw's bot message filter (Issue #11199) treats ALL configured bots as "self" and drops their messages. This is a code-level bug, not a platform limitation -- but fix PRs have all been closed.
+- **Feishu**: Feishu's `im.message.receive_v1` event **only delivers user-sent messages** -- bot messages are completely invisible to other bots. This is a platform API design decision and cannot be worked around through configuration.
+
+### Current Status of Discussion Mode
+
+To be candid: Discussion mode has not been verified end-to-end.
+
+Through OpenClaw source code verification (`extensions/slack/src/monitor/message-handler/prepare.ts`), the following mechanisms are confirmed:
+- Self-loop filtering is per-account (different Slack Apps don't filter each other)
+- `allowBots` supports three-tier fallback (per-channel > per-account > global)
+- Per-account channel config can give different bots different `requireMention` settings on the same channel
+
+But the complete chain -- CoS-Bot posts in #cto, CTO receives and replies, CoS sees the reply and continues the conversation -- still needs a real POC test. See `shared/A2A_PROTOCOL.md` Appendix B for verification steps.
+
 ---
 
 ## 5. Structured Artifacts: Closeout and Checkpoint
@@ -270,8 +315,9 @@ You (decision-maker)
   |-- Tasks are classified and handled via QAPS
   |     +-- Q gets lightweight handling; A/P/S require Closeout
   |
-  |-- Agents collaborate via A2A two-step trigger
-  |     +-- Permission matrix + loop prevention
+  |-- Agents collaborate via A2A
+  |     |-- Delegation: two-step trigger + permission matrix
+  |     +-- Discussion: @mention multi-agent deliberation [Pending POC Verification]
   |
   +-- Knowledge accumulates through three-layer distillation
         +-- Conversation -> Closeout -> KO abstract knowledge
