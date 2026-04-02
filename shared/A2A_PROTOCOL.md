@@ -17,7 +17,7 @@
 - **A2A**：Agent-to-Agent 协作流程总称，包含 Delegation 和 Discussion 两种模式。
 - **Task Thread**：在目标 Agent 频道里创建的任务线程；该线程即该任务的独立 Session。
 - **Delegation（委派）**：由 `sessions_send` 触发的结构化任务委派，全平台可用。
-- **Discussion（讨论）**：由 @mention 触发的多 Agent 实时讨论，仅 Slack 多 Bot [待 POC 验证]。
+- **Discussion（讨论）**：由 @mention 触发的多 Agent 实时讨论，仅 Slack 多 Bot [已验证]。
 - **Multi-Account（多账户）**：每个 Agent 使用独立 Slack App（独立 bot token / app token / bot user ID）。
 - **Orchestrator（编排者）**：控制讨论节奏的角色。默认是 CoS（代表用户推进），也可以是人类。
 
@@ -229,7 +229,7 @@ Rounds Used: N/M
 | 能力 | Slack | Discord | Feishu |
 |------|-------|---------|--------|
 | Delegation | YES | YES | YES |
-| Discussion | 待 POC 验证 | NO（OpenClaw 代码层阻塞） | NO（飞书平台限制） |
+| Discussion | ✅ 已验证 | NO（OpenClaw 代码层阻塞） | NO（飞书平台限制） |
 | Multi-Account | YES | YES | YES（注意 #47436） |
 | Thread/Topic 隔离 | YES (native) | YES (auto-archive) | YES (groupSessionScope >= 2026.3.1) |
 

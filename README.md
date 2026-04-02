@@ -14,19 +14,23 @@
 
 ---
 
-## 📢 近况更新（2026 年 3 月 19 日）
+## 📢 近况更新（2026 年 4 月）
 
-感谢越来越多的同学关注 OpenCrew。项目有一段时间没更新了，但这也是我自己一直在用的架构——**项目没有停，方向没有变。** 后续会在合适的时机持续更新，也欢迎大家多提 Issue 反馈问题和需求。
+### A2A v2：Agent 之间能真正讨论了
 
-OpenCrew 还在早期，很多实现方式还不够高效，但核心目标始终清晰：**让每个人都能管好一支多 Agent 团队——有机协同、稳定迭代。**
+我们解决了 OpenCrew 自诞生以来最大的架构限制：**Agent 之间现在可以像真人一样在同一个 Slack 频道里讨论问题**，而不只是单向派任务。
 
-目前在做的事：看板与聊天界面的项目管理融合、Agent 智能 Onboarding（从海量开源 Agent 和 Skills 中精炼选型方法论，让系统能自动引入新 Agent）、架构简化（当前 A2A 依赖补丁方案，正跟踪 OpenClaw 上游的系统级支持）、以及探索更适合多 Agent 架构的记忆管理体系。各方向都在测试新技术，但我不想推未经验证的临时方案——开源生态在快速革新，我会在时机成熟时做一次有质量的更新。
+**之前**：所有 Agent 共享一个 Slack bot → bot 不能触发自己 → Agent 之间只能靠 `sessions_send` 单向委派。
 
-就我个人体感来说，**Slack 目前仍是多 Agent 管理的最优解。** 我在一个 Workspace 管理两台设备上的 17 个 Agent，体验已经很流畅。Slack 新上线的 Activity 页面（类似邮件收件箱）非常适合批量处理 Agent 通知。
+**现在**：给少数关键 Agent（如你的幕僚长 / 编排者）创建一个独立 Slack App → 把它拉进任意 Agent 的频道 → 两个 Agent 直接对话，你可以实时旁观。
 
-我相信关注这个仓库的同学，大多已经有了深度的 Agent 和 AI 协作经验，并且希望利用多 Agent 在工作和生活中创造更大的价值。在这个基础上，可能不少人也在思考一个更进一步的问题：**如何真正发挥 Coding Agent 的能力去打造生产级应用，而不只是用 Lovable 之类的工具做一个 demo。** 我最近在做的另一个项目 **[Agent-First Development](https://github.com/AlexAnys/agent-first-dev)** 就围绕这个方向——面向非技术或全栈背景的构建者，内容框架参考 Stanford （已获授权） 和 Chicago Booth 的相关课程，同样在持续开发中，欢迎关注。
+![A2A v2 架构](docs/OpenCrew-A2A-V2-架构图.svg)
 
-**感谢每一位关注者的耐心。下一个更新不远了。**
+这个架构借鉴了 [Anthropic Harness Design](https://www.anthropic.com/engineering/harness-design-long-running-apps) 的核心洞察：**生成者（执行）和评估者（QC）必须分离**——因为同一个 AI 既做事又自检时，它倾向于对自己宽容。在 OpenCrew 中，编排者负责规划和质量把关，执行层 Agent 负责干活，两者通过 @mention 在 Slack 频道里自然协作。
+
+**设置只需三步**：创建一个独立 Slack App → 配置多账号 → 把 bot 拉进目标频道。详见 → [Discussion Mode 配置指南](docs/A2A_SETUP_GUIDE.md)
+
+> 更多技术细节和实战踩坑记录 → [A2A 协议 v2](shared/A2A_PROTOCOL.md) · [核心概念](docs/CONCEPTS.md#a2a-的两种模式delegation-与-discussion)
 
 ---
 
@@ -226,9 +230,14 @@ OpenCrew 的运转靠几个关键机制。下面是 30 秒速览，详细说明�
 | P | 项目（多步骤、跨天） | 需要 + Checkpoint |
 | S | 系统变更 | 需要 + Ops 审计 |
 
-**A2A 两步触发** — Agent 之间怎么协作
+**A2A 两种模式** — Agent 之间怎么协作
 
-因为所有 Agent 共用一个 Slack bot，bot 自己发的消息不会触发自己。所以跨 Agent 协作需要两步：先在目标频道发一条可见消息（锚点），再用 `sessions_send` 真正触发对方。细节见 → [A2A 协议](shared/A2A_PROTOCOL.md)
+| 模式 | 适用场景 | 机制 | 平台 |
+|------|---------|------|------|
+| **Delegation（委派）** | 派具体任务 | `sessions_send` 两步触发 | Slack / Discord / 飞书 |
+| **Discussion（讨论）** | 多方讨论、评审、协商 | 独立 Bot @mention 对话 | Slack |
+
+Delegation 是基础——CTO 给 Builder 派活。Discussion 是增强——编排者走进 CTO 的频道，两个 Agent 直接讨论方案，你在旁边看着。细节见 → [A2A 协议 v2](shared/A2A_PROTOCOL.md)
 
 **三层知识沉淀** — 经验怎么从聊天记录变成组织资产
 
@@ -243,11 +252,17 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 ## 跑通 A2A 闭环
 
 > 部署完成后，每个 Agent 各自能回复消息 ≠ Agent 之间能协作。
-> A2A（Agent-to-Agent）闭环需要额外配置和验证。
+> A2A（Agent-to-Agent）需要额外配置。OpenCrew 支持两种模式：
 
-### 什么是 A2A 闭环？
+### Delegation（委派）— 派任务
 
 你在 `#cto` 给 CTO 一个开发任务 → CTO 自动在 `#build` 给 Builder 派单 → Builder 在 thread 里分轮执行 → 每轮进展在 Slack 可见 → CTO 回到 `#cto` 汇报结果。**全程你只需要看 Slack。**
+
+### Discussion（讨论）— 多 Agent 协作 `NEW`
+
+选一个 Agent 作为你的编排者（如 CoS），给它创建独立 Slack App → 把它拉进 CTO 和 Builder 的频道 → 编排者在频道里 @mention 执行 Agent 发起讨论 → 执行 Agent 回复 → 编排者评估、追问或结束 → **你看到的是两个 Agent 在 Slack 里像同事一样讨论问题。**
+
+> 为什么要分离？借鉴 Anthropic Harness Design：同一个 AI 既执行又自检时倾向于宽容自己。编排者专注规划和 QC，执行 Agent 专注干活——这是让 AI 协作真正有效的关键分工。
 
 ### 让你的 Agent 自动完成 A2A 设置
 
@@ -288,7 +303,7 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 | **[完整上手指南](docs/GETTING_STARTED.md)** | 从零到跑通的详细步骤 + 常见问题 | 第一次部署 |
 | **[核心概念详解](docs/CONCEPTS.md)** | 自主等级、QAPS、A2A、知识沉淀的完整说明 | 想深度理解系统 |
 | **[架构设计](docs/ARCHITECTURE.md)** | 三层架构、设计取舍、为什么这么做 | 想理解设计思路 |
-| **[A2A 跑通指南](docs/A2A_SETUP_GUIDE.md)** | A2A 配置、workspace 补丁、验证步骤 | 让 Agent 间能协作 |
+| **[A2A 跑通指南](docs/A2A_SETUP_GUIDE.md)** | Delegation + Discussion 配置、多账号设置、验证步骤 | 让 Agent 间能协作 |
 | **[自定义指南](docs/CUSTOMIZATION.md)** | 增删改 Agent、替换领域专家 | 想调整团队配置 |
 | **[已知问题](docs/KNOWN_ISSUES.md)** | 系统的真实边界和当前最佳实践 | 遇到奇怪行为时 |
 | **[开发历程](docs/JOURNEY.md)** | 从一个人的痛点到一支虚拟团队 | 想了解来龙去脉 |
@@ -312,7 +327,8 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 ### ✅ 已稳定运行
 
 - 多 Agent 领域分工 + 频道绑定（Slack / 飞书 / Discord）
-- A2A 两步触发（Slack 可见锚点 + sessions_send）
+- A2A Delegation（两步触发：Slack 可见锚点 + `sessions_send`）
+- A2A Discussion（独立 Bot @mention 协作，Slack 已验证）`NEW`
 - A2A 闭环（多轮 WAIT 纪律 + 双通道留痕 + 闭环 DoD）
 - Closeout / Checkpoint 强制结构化产物
 - Autonomy Ladder（L0-L3）
@@ -323,7 +339,7 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 - 更好的知识系统（跨 session 语义检索）
 - 更轻量的架构（v2-lite：7 Agent → 5，9 个 shared 文件 → 3）
-- Slack root message 独立 session 的更稳定方案
+- Discord Discussion 模式（受 OpenClaw 代码层 bug 阻塞，非平台限制）
 
 ---
 
