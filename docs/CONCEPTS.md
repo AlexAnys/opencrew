@@ -123,29 +123,31 @@ CIO → 独立运作（必要时与 CoS 同步）
 
 上面描述的两步触发是 **Delegation（委派）** 模式——一个 Agent 通过 `sessions_send` 把结构化任务交给另一个 Agent。这是 A2A 的基础，所有平台都支持，流程清晰、单向可控。
 
-v2 引入了第二种模式：**Discussion（讨论）**。少数高价值 Agent（如 CoS）拥有独立 Slack App，直接进入其他 Agent 的频道进行实时讨论。 [待 POC 验证]
+v2 引入了第二种模式：**Discussion（讨论）**。少数高价值 Agent（如 Orchestrator）拥有独立 Slack App，直接进入其他 Agent 的频道进行实时讨论。
 
-**核心思路：选择性独立化。** 不需要每个 Agent 都有独立 App——执行层（CTO、Builder、CIO 等）继续共享一个 Slack App。只让 CoS（代表用户推进方向）等需要跨域协作的 Agent 拥有独立 App，然后把它拉进目标频道就能直接对话。
+**核心思路：选择性独立化。** 不需要每个 Agent 都有独立 App——执行层（CTO、Builder、CIO 等）继续共享一个 Slack App。只让需要跨域协作的 Agent（如 Orchestrator）拥有独立 App，把它拉进目标频道就能直接对话。
+
+这里借鉴了 **Anthropic Harness Design** 的核心洞察：当一个 AI 既做执行又做 QA 时，它倾向于宽容自己的错误；既做规划又做执行时，倾向于投机取巧。将"想"和"做"分给不同 Agent——Orchestrator 负责规划和评估，执行层 Agent 负责实现——是解决 AI 自评失效最有效的杠杆。
 
 **什么时候用哪个？**
 
-| | Delegation（委派） | Discussion（讨论）[待 POC 验证] |
-|--|-------------------|-------------------------------|
-| 场景 | "CTO 给 Builder 派一个具体任务" | "CoS 进 #cto 跟 CTO 讨论方案，然后去 #build 跟 Builder 确认可行性" |
-| 触发方式 | `sessions_send` | @mention / 直接发消息 |
+| | Delegation（委派） | Discussion（讨论） |
+|--|-------------------|-------------------|
+| 场景 | "CTO 给 Builder 派一个具体任务" | "Orchestrator 进 #cto 跟 CTO 讨论方案，然后去 #build 跟 Builder 确认可行性" |
+| 触发方式 | `sessions_send` | 显式 @mention |
 | 方向性 | 单向，一对一 | 多向，多对多 |
 | 平台 | Slack / Discord / Feishu | 仅 Slack（需独立 App） |
 
 两种模式共存，不互相替代。Delegation 是"给任务"，Discussion 是"一起想"。
 
-**为什么需要 Discussion？** Delegation 是任务分发：CTO 说做什么，Builder 照做。但真实团队不只是派活——他们讨论。CoS 走进 CTO 的办公室说"这个方向你怎么看？"，CTO 说"技术上可以但成本高"，CoS 又去问 Builder"你觉得多久能做完？"。Discussion 模式让 Agent 也能这样协作——CoS-Bot 被拉进 #cto 频道，直接在 CTO 的地盘上对话，你可以实时旁观、随时插话。
+**为什么需要 Discussion？** Delegation 是任务分发：CTO 说做什么，Builder 照做。但真实团队不只是派活——他们讨论。Orchestrator 走进 CTO 的办公室说"这个方向你怎么看？"，CTO 说"技术上可以但成本高"，Orchestrator 又去问 Builder"你觉得多久能做完？"。Discussion 模式让 Agent 也能这样协作——Orchestrator-Bot 被拉进 #cto 频道，直接在 CTO 的地盘上对话，你可以实时旁观、随时插话。
 
 ### 平台能力对比
 
 | 能力 | Slack | Discord | Feishu |
 |------|-------|---------|--------|
 | Delegation（sessions_send） | ✅ | ✅ | ✅ |
-| Discussion（跨 bot 对话）| 待 POC 验证 | 不支持（OpenClaw 代码层 bug） | 不支持（飞书平台限制） |
+| Discussion（跨 bot 对话）| ✅ 已验证 | 不支持（OpenClaw 代码层 bug） | 不支持（飞书平台限制） |
 | Thread / Topic 隔离 | 原生 thread | Thread（自动归档） | groupSessionScope（>= 2026.3.1） |
 
 **为什么 Discord 和 Feishu 不支持 Discussion？**
@@ -155,14 +157,20 @@ v2 引入了第二种模式：**Discussion（讨论）**。少数高价值 Agent
 
 ### Discussion 模式的当前状态
 
-坦率地说：Discussion 模式还没有被端到端验证过。
+Discussion 模式已通过端到端验证（2026-04-02）。两个独立 bot 可以在同一频道互相看到消息并进行结构化讨论。
 
-通过 OpenClaw 源码验证（`extensions/slack/src/monitor/message-handler/prepare.ts`），以下机制已确认：
-- Self-loop 过滤是 per-account 的（不同 Slack App 不互相过滤）
-- `allowBots` 支持三级 fallback（per-channel > per-account > global）
-- Per-account channel config 可以给同一频道的不同 bot 设置不同的 `requireMention`
+通过 OpenClaw 源码验证 + 实测确认：
+- Self-loop 过滤是 per-account 的（不同 Slack App 不互相过滤）✅
+- `allowBots` 支持三级 fallback（per-channel > per-account > global）✅
+- Per-account channel config 可以给同一频道的不同 bot 设置不同的 `requireMention` ✅
+- 多账号配置需要**同时声明 `accounts.default`**（否则主 bot 断连）⚠️
 
-但完整链路——CoS-Bot 在 #cto 发消息，CTO 收到并回复，CoS 看到回复并继续对话——还需要实际 POC 验证。详见 `shared/A2A_PROTOCOL.md` 附录 B。
+**实战发现的限制**：
+- `requireMention: true` 在 Thread 内被 `implicitMention` 绕过——需要 Prompt 规则配合
+- `allowBots: "mentions"` 在 Slack 无效（仅 Discord 支持）
+- Input token 无法避免——所有消息送达所有 bot，只能让 agent 回复 NO_REPLY
+
+详细配置指南和陷阱清单见 [Discussion Mode 实操指南](A2A_SETUP_GUIDE.md)。完整协议见 `shared/A2A_PROTOCOL.md`。
 
 ---
 
@@ -317,7 +325,7 @@ Layer 2: 抽象知识
   │
   ├─ Agent 之间通过 A2A 协作
   │   ├─ Delegation：两步触发 + 权限矩阵
-  │   └─ Discussion：@mention 多 Agent 讨论 [待 POC 验证]
+  │   └─ Discussion：@mention 多 Agent 讨论 [已验证]
   │
   └─ 知识通过三层沉淀积累
       └─ 对话 → Closeout → KO 抽象知识

@@ -6,7 +6,9 @@
 > - 不串上下文（thread 级隔离 + 任务包完整）
 >
 > v2 覆盖平台：Slack / Feishu / Discord
-> v2 协作模式：**Delegation**（全平台）+ **Discussion**（Slack 多 Bot）[待 POC 验证]
+> v2 协作模式：**Delegation**（全平台）+ **Discussion**（Slack 多 Bot）[已验证]
+>
+> 配置指南：[Discussion Mode 实操指南](../docs/A2A_SETUP_GUIDE.md)
 
 ---
 
@@ -94,64 +96,115 @@ A 读取 root message 的 message id（ts），拼出 thread sessionKey：
 
 ---
 
-## 2b) Discussion Mode（讨论模式 — Slack 多 Bot）[待 POC 验证]
+## 2b) Discussion Mode（讨论模式 — Slack 多 Bot）[已验证]
 
 > Discussion 是 Delegation 的增强，不是替代。适用于需要多方实时讨论的场景。
 > 仅 Slack 平台支持。原因见 §7。
+> 完整配置指南见 [A2A_SETUP_GUIDE.md](../docs/A2A_SETUP_GUIDE.md)。
 
 ### 核心思路：选择性独立化
 
-不需要每个 Agent 都有独立 Slack App。只需让**少数高价值的横向 Agent**（如 CoS、QA）拥有独立 App，然后**把它们拉进现有 Agent 的频道**进行协作：
+不需要每个 Agent 都有独立 Slack App。只需让**少数高价值的横向 Agent**（如 Orchestrator）拥有独立 App，然后**把它们拉进现有 Agent 的频道**进行协作：
 
 ```
                  独立 Slack App              共享 Slack App (现有)
-                 ┌─────────┐               ┌─────────────────┐
-                 │ CoS-Bot │               │   Default-Bot   │
-                 └────┬────┘               └───┬───┬───┬─────┘
-                      │                        │   │   │
-  频道：  #hq(home)  #cto  #build         #cto #build #invest ...
+                 ┌──────────────┐           ┌─────────────────┐
+                 │ Orchestrator │           │   Default-Bot   │
+                 └──────┬───────┘           └───┬───┬───┬─────┘
+                        │                       │   │   │
+  频道：  #hq(home)  #cto  #build          #cto #build #invest ...
           ──────────────────────────────────────────────────────
-  Agent：    CoS      ← 进入协作 →          CTO  Builder  CIO ...
+  Agent：  Orchestrator ← 进入协作 →        CTO  Builder  CIO ...
 ```
 
-**CoS-Bot 被拉进 #cto** → 直接在 CTO 的地盘对话 → 像两个人在同一间办公室讨论。
+这里的 Orchestrator 融合了 Anthropic Harness Design 中 **Planner + Evaluator** 的职责：
+- 展开需求为验收标准（Planner）
+- 评估参与者的产出（Evaluator）
+- 控制讨论节奏和终止（Orchestrator）
+
+执行层 Agent（CTO/Builder 等）是 **Generator**：执行具体工作，不自评通过。
+
+> **为什么要分离？** 当一个 AI 既做执行又做 QA 时，它倾向于宽容自己的错误；既做规划又做执行时，倾向于投机取巧。将"想"和"做"分给不同 Agent，是解决 AI 自评失效最有效的杠杆。
 
 ### 技术原理（源码验证）
 
 1. **Self-loop 按 account 隔离**：每个 Slack App 有独立 `botUserId`，OpenClaw 只过滤来自自己的消息（`message.user === ctx.botUserId`），不同 App 之间不互相过滤。
 2. **`allowBots: true`**：允许处理其他 bot 的消息。须在目标频道的 channel config 中开启。
-3. **Per-account channel config**：同一频道可以给不同 account 设置不同的 `requireMention`。例如 #cto 频道：CTO 的 account → `requireMention: false`（照常响应所有消息）；CoS 的 account → `requireMention: true`（只在被 @mention 时响应）。
-4. **Thread participation 隐式 mention**：CoS-Bot 一旦在某个 thread 中发过消息，后续该 thread 的消息会触发 CoS 的隐式 mention，让对话可以持续进行。
+3. **Per-account channel config**：同一频道可以给不同 account 设置不同的 `requireMention`。
 
-### 协作流程
+### ⚠️ Thread 内的隐式触发问题（实战发现）
 
-```
-用户在 #cto: "@CoS 请协调评审 X 功能的架构方案"
+`requireMention: true` 只在 **Channel 根消息**（非 thread）有效。一旦 bot 在 thread 中回复过，`implicitMention` 永远为 true，绕过 `requireMention`。
 
-CoS-Bot 收到 @mention → 进入 #cto thread
-  → CoS: "好的，我来协调。@CTO 请先提出你的方案。"
+源码证据（`resolveMentionGating`）：
 
-CTO (Default-Bot) 收到消息（requireMention: false，在自己频道）
-  → CTO: "方案如下：... 建议用方案 A。"
-
-CoS-Bot 收到（thread participation 隐式 mention）
-  → CoS: "@CTO 方案 A 的成本如何？另外 @Builder 请评估可行性。"
-  （CoS 决定下一个参与者——编排者角色）
-
-Builder (Default-Bot) 在 #cto 收到 @mention → 加载 thread 历史
-  → Builder: "方案 A 工期约 2 周，有一个依赖需要先解决。"
-
-CoS-Bot 收到 → 综合意见
-  → CoS: "DISCUSSION_CLOSE | 共识：采用方案 A，Builder 先处理依赖。"
-  → CoS 用 Delegation (sessions_send) 给 CTO 派正式任务
+```js
+implicitMention = !isDirectMessage && botUserId && message.thread_ts &&
+    (message.parent_user_id === botUserId || hasSlackThreadParticipation(...))
 ```
 
-### 关键约束
+**影响**：Thread 内所有消息都会触发已参与的 bot，可能导致双响应或循环。
 
-- **CoS 是编排者**：决定讨论节奏，谁下一个发言。CTO/Builder 是参与者，不主动 @mention 其他 Agent。
-- **轮次上限**：CoS 的 AGENTS.md 写明 `maxDiscussionTurns: 5`。到限后必须结束。
-- **Thread 隔离**：每个讨论 = 一个 thread。
-- **讨论后转 Delegation**：Discussion 的 Action Item 通过 Delegation 执行。
+**解决：两层防线**
+
+| 层级 | 机制 | 效果 | 类型 |
+|------|------|------|------|
+| Config | `requireMention: true` | 防止 Channel 根消息双触发 | 硬约束 |
+| Prompt | 显式 @mention 协议（见下文） | 防止 Thread 内双响应和循环 | 软约束 |
+
+### 显式 @mention 协议（Multi-Agent Thread 规则）
+
+每个参与 Discussion Mode 的 Agent 必须在 workspace 文件中包含此规则：
+
+```markdown
+## Multi-Agent Thread 协作规则
+
+在 Slack thread 中如果有其他 bot 也在参与：
+
+1. **显式 @mention 检查**：检查消息文本是否包含 `<@你的BotID>`。
+   如果没有 → 整条回复只输出 `NO_REPLY`，不解释、不叙述。
+
+2. **发送消息时必须 @mention 目标**：`<@目标BotID>` 显式 mention。
+   不 @ 任何 bot = 对话终止信号。
+
+3. **角色分工**：
+   - Orchestrator（编排者）：选择 @Worker / @Human / 不@（结束）
+   - Worker（执行方）：每次回复必须 @ Orchestrator
+
+4. **终止**：说"完毕/done/结论"后不再发送，除非被重新 @。
+
+5. **轮次上限**：同一 thread 内最多 8 轮，超过后暂停并向人类汇报。
+```
+
+### 协作流程（融合 Anthropic Harness Design）
+
+```
+用户 → @Orchestrator: "讨论 X 议题"
+
+Phase 0（Orchestrator 展开 spec）:
+  → 📁 discussions/<topic>/spec.md（目标 + 验收标准 + 终止条件）
+  → Thread: 「DISCUSSION SPEC: 目标...验收标准 N 条。@Worker 请先...」
+
+Round 1/M:
+  Orchestrator → @Worker: 具体问题
+  Worker → @Orchestrator: 摘要 + 📁 round-1.md（详细分析）
+
+Round 2/M:
+  Orchestrator 评估 → 📁 review-1.md → @Worker 反馈
+  ...
+
+终止（三选一）:
+  ✅ 所有验收标准满足 → DISCUSSION_CLOSE
+  ⚠️ 达到最大轮次 → WARNING，请人类介入
+  🔄 连续 2 轮无进展 → 请人类介入
+```
+
+**关键原则**（源自 Anthropic Harness Design）：
+1. **先 spec 再讨论**——Phase 0 定义验收标准，不能跳过
+2. **文件是主通信通道**——Thread 只放摘要和 @mention 路由，详细内容写文件
+3. **自评失效，必须分离**——Orchestrator 不生成方案，只协调和评估
+4. **Orchestrator 默认太宽松**——需刻意严格，逐条对照标准判断
+5. **正式任务走 `sessions_send`**——Discussion 的 Action Item 通过 Delegation 执行
 
 ### Discussion 终止协议
 
@@ -160,9 +213,13 @@ CoS-Bot 收到 → 综合意见
 ```
 DISCUSSION_CLOSE
 Topic: <讨论主题>
-Consensus: <共识 / "未达成共识">
-Actions: <后续 Delegation 任务列表，含 TID>
-Participants: <参与 Agent 列表>
+Consensus: <共识 / "未达成共识，原因：...">
+Criteria Status:
+  1. ✅/❌ <标准 1>: <状态>
+  2. ✅/❌ <标准 2>: <状态>
+Actions: <后续 Delegation 任务列表，含负责人>
+Participants: <参与 Agent>
+Rounds Used: N/M
 ```
 
 ---
@@ -235,59 +292,67 @@ Discussion 模式下，CoS-Bot 进入其他 Agent 的频道（如 #cto、#build�
 
 ---
 
-## 7) 已知限制与待验证
+## 7) 已知限制
 
-1. **Slack Discussion [待 POC 验证]**：各组件已通过源码验证（self-loop per-account、allowBots 三级 fallback、per-account channel config），但端到端链路尚无实测记录。
+1. **Slack Discussion [已验证]**：端到端链路已通过实测验证（2026-04-02）。两个 bot 可在同一频道互相看到消息并进行结构化讨论。但 Thread 内的隐式触发需要 Prompt 规则配合（见 §2b）。
 2. **Discord Discussion [NO]**：OpenClaw Issues #11199（bot filter 全局化）+ #45300（requireMention 多账户失效），均已关闭未修复。
 3. **Feishu Discussion [NO]**：飞书 `im.message.receive_v1` 仅投递用户消息（平台限制，非 OpenClaw bug）。
 4. **Issue #15836**：OpenClaw 关闭了 Slack A2A routing 请求（NOT_PLANNED）。`sessions_send` 仍是官方推荐方式。Discussion 作为增强，非替代。
+5. **`allowBots: "mentions"` 仅 Discord 可用**：Slack provider 只做 truthy/falsy 检查，`"mentions"` 等同于 `true`。需要 OpenClaw 代码改动才能在 Slack 支持。
+6. **`requireMention: true` 在 Thread 内被绕过**：`implicitMention`（thread participation）会永久绕过 `requireMention`。需要 OpenClaw 增加 `thread.requireExplicitMention` 选项才能从系统层解决。
+7. **Input token 无法避免**：Thread 中所有消息都会送达所有 bot，Prompt 规则只让 agent 回复 NO_REPLY，但 input token 消耗不可避免。
+8. **多账号 `accounts.default` 必须显式声明**：详见附录 A 的警告。实战中因遗漏导致过 ~13h 全 Agent 断连。
 
 ---
 
 ## 附录 A：Discussion Mode 配置指南（Slack）
 
-> 以下配置可由你的 OpenClaw agent 协助完成。人工操作仅需创建 Slack App 和邀请 bot。
+> 详细实操指南见 [A2A_SETUP_GUIDE.md](../docs/A2A_SETUP_GUIDE.md)，包含完整 manifest、陷阱清单和回滚方式。
+> 以下是精简版。
 
 ### 人工操作（一次性）
 
-1. **创建独立 Slack App**（如 CoS-Bot）：
-   - 前往 [api.slack.com/apps](https://api.slack.com/apps) → Create New App
-   - 启用 Socket Mode，获取 App Token (`xapp-`)
-   - 添加 Bot Token Scopes: `channels:history`, `channels:read`, `chat:write`, `users:read`
-   - 添加 Event Subscriptions: `message.channels`, `app_mention`
-   - 获取 Bot Token (`xoxb-`)
-   - 记录 Bot User ID（Settings → Basic Info → App Credentials，或在 Slack 中查看 bot 的 profile）
+1. **创建独立 Slack App**：前往 [api.slack.com/apps](https://api.slack.com/apps) → Create New App → **From manifest**
+   - 使用 [A2A_SETUP_GUIDE.md](../docs/A2A_SETUP_GUIDE.md) 中的完整 manifest（含所有必要 scope 和 event）
+   - 创建后：Basic Information → App-Level Tokens → Generate（scope: `connections:write`）→ 拿到 `xapp-`
+   - Install to Workspace → 拿到 `xoxb-`
 
-2. **邀请 CoS-Bot 到目标频道**：在 #cto、#build 等频道中运行 `/invite @CoS-Bot`
+2. **邀请 Bot 到目标频道**：`/invite @Bot-Name`
 
-### Agent 可执行的配置（发给你的 OpenClaw）
+### Agent 可执行的配置
 
-> 以下是给 OpenClaw agent 的执行提示。将凭证替换为实际值后，发送给你的 agent。
+> ⚠️ **硬性要求：必须同时声明 `accounts.default`**
+>
+> OpenClaw 的 `account-helpers.ts:listAccountIds()` 逻辑：一旦 `accounts` 对象存在且有任何 key，
+> 只启动显式声明的账号。漏掉 `accounts.default` = 主 bot 断连，所有现有 Agent 失联。
+>
+> 这是设计如此，不是 bug。实战中因此导致过约 13 小时的全 Agent 断连事故。
+
+将以下配置提示发给你的 OpenClaw agent（替换凭证）：
 
 ```
 请帮我配置 Discussion Mode。
 
-CoS-Bot 凭证（写入配置，不要回显）：
-- Bot Token: xoxb-cos-xxx
-- App Token: xapp-cos-xxx
+Bot 凭证（写入配置，不要回显）：
+- Bot Token: xoxb-xxx
+- App Token: xapp-xxx
 
-请在 openclaw.json 中执行以下增量修改（不要覆盖现有配置）：
+请在 openclaw.json 中执行以下增量修改：
 
-1. 在 channels.slack 下添加 accounts 块：
-   - 将现有的 botToken/appToken 移入 accounts.default
-   - 添加 accounts.cos（使用上面的凭证）
+1. 在 channels.slack.accounts 下：
+   ★ 必须同时声明 accounts.default（用现有顶层 token）
+   - accounts.default = { botToken: 现有, appToken: 现有 }
+   - accounts.<new-bot> = { botToken: 新的, appToken: 新的, channels: {...} }
 
-2. 添加 CoS 的 account binding：
-   { "agentId": "cos", "match": { "channel": "slack", "accountId": "cos" } }
+2. 在目标频道开启双向 allowBots:
+   - 全局 channel config: allowBots: true（让原有 Agent 看到新 bot）
+   - 新 account channel config: allowBots: true, requireMention: true
 
-3. 在需要跨 bot 协作的频道配置中添加 allowBots: true：
-   channels.slack.accounts.default.channels.<CTO_CHANNEL_ID>.allowBots = true
-   channels.slack.accounts.cos.channels.<CTO_CHANNEL_ID>.requireMention = true
-   channels.slack.accounts.cos.channels.<CTO_CHANNEL_ID>.allowBots = true
+3. 添加 binding（accountId + peer，放在现有 peer binding 之前）
 
-4. 不要修改现有的 agent bindings、models、auth、gateway 配置。
+4. 等待热重载，不要立即 SIGTERM
 
-5. 重启 gateway 并验证 CoS-Bot 在 #cto 中可以被 @mention 触发。
+5. 验证日志：两个 provider 都 starting + channels resolved 无 missing_scope
 ```
 
 ### 配置结构参考
