@@ -249,29 +249,53 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 ---
 
-## 跑通 A2A 闭环
+## 让 Agent 之间协作
 
 > 部署完成后，每个 Agent 各自能回复消息 ≠ Agent 之间能协作。
-> A2A（Agent-to-Agent）需要额外配置。OpenCrew 支持两种模式：
+> A2A（Agent-to-Agent）需要额外配置。
 
-### Delegation（委派）— 派任务
+### Discussion Mode（推荐）— 真正的多 Agent 协作
 
-你在 `#cto` 给 CTO 一个开发任务 → CTO 自动在 `#build` 给 Builder 派单 → Builder 在 thread 里分轮执行 → 每轮进展在 Slack 可见 → CTO 回到 `#cto` 汇报结果。**全程你只需要看 Slack。**
+选一个 Agent 做编排者，给它创建独立 Slack App → 拉进执行 Agent 的频道 → 两个 Agent 在频道里直接协作。
 
-### Discussion（讨论）— 多 Agent 协作 `NEW`
+**设置只需三步**（人工操作约 5 分钟，剩余由 Agent 完成）：
 
-选一个 Agent 作为你的编排者（如 CoS），给它创建独立 Slack App → 把它拉进 CTO 和 Builder 的频道 → 编排者在频道里 @mention 执行 Agent 发起讨论 → 执行 Agent 回复 → 编排者评估、追问或结束 → **你看到的是两个 Agent 在 Slack 里像同事一样讨论问题。**
-
-> 为什么要分离？借鉴 Anthropic Harness Design：同一个 AI 既执行又自检时倾向于宽容自己。编排者专注规划和 QC，执行 Agent 专注干活——这是让 AI 协作真正有效的关键分工。
-
-### 让你的 Agent 自动完成 A2A 设置
-
-> ⚠️ **首次设置提醒**：A2A 闭环流程中，Agent 会检查并补全 `openclaw.json` 的 A2A 配置（如 `agentToAgent.allow`、`maxPingPongTurns`）。配置变更会**自动触发 OpenClaw gateway 重启**，导致所有 Agent 的当前会话短暂中断。这是正常的一次性设置过程——重启完成后 Agent 会自动恢复，你只需要重新发起验证步骤即可。
-
-把下面这段发给你的任一 Agent（推荐 **Ops**，也可以是 **CTO** 或 **CoS**）：
+1. **创建独立 Slack App**：[api.slack.com/apps](https://api.slack.com/apps) → From manifest → 用 [A2A_SETUP_GUIDE.md](docs/A2A_SETUP_GUIDE.md) 中的 manifest
+2. **让你的 Agent 配置多账号**——把下面这段发给你的任一 Agent：
 
 ```
-请帮我跑通 A2A 闭环。
+请帮我配置 Discussion Mode。
+
+参考文档：请读仓库里的 docs/A2A_SETUP_GUIDE.md
+
+新 Bot 凭证（写入配置，不要回显）：
+- Bot Token: <xoxb-新bot>
+- App Token: <xapp-新bot>
+
+目标频道：#cto（让新 bot 可以和 CTO 协作）
+
+请按 A2A_SETUP_GUIDE.md 的步骤配置多账号。
+★ 必须同时声明 accounts.default（用现有 token），否则主 bot 会断连。
+不要改我的 models / auth / gateway 其他配置。
+```
+
+3. **在目标频道邀请 bot**：`/invite @新Bot名`
+
+验证：在 #cto 里 @mention 新 bot → 新 bot 回复 → 在 thread 里 @mention CTO → CTO 也回复 → 两个 Agent 在同一 thread 对话 ✅
+
+> 完整指南（含 manifest、配置模板、踩坑清单、回滚方式）→ [Discussion Mode 配置指南](docs/A2A_SETUP_GUIDE.md)
+
+### Delegation Mode — 单向派任务
+
+不需要 Discussion 的场景，可以用更简单的 Delegation 模式：CTO 在 `#build` 给 Builder 派单 → Builder 分轮执行 → CTO 回到 `#cto` 汇报。全程你只需要看 Slack。
+
+<details>
+<summary>Delegation 设置（不需要独立 Slack App）</summary>
+
+把下面这段发给你的任一 Agent：
+
+```
+请帮我跑通 A2A Delegation。
 
 参考文档：请读仓库里的 docs/A2A_SETUP_GUIDE.md
 
@@ -288,9 +312,11 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 不要改我的 models / auth / gateway 其他配置，只做 A2A 相关的增量。
 ```
 
-### 手动设置？
+> ⚠️ 首次设置时 Agent 会补全配置并触发 gateway 重启，所有 Agent 短暂中断后自动恢复。
 
-完整指南（含配置示例和验证步骤）→ [A2A 跑通指南](docs/A2A_SETUP_GUIDE.md)
+</details>
+
+> 两种模式的完整对比和技术细节 → [A2A 协议 v2](shared/A2A_PROTOCOL.md)
 
 ---
 
