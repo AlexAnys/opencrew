@@ -16,5 +16,8 @@ Thumbs.db
 *.env
 secrets/
 credentials/
-.harness/
+
+# Local development (not part of the product)
 CLAUDE.md
+.claude/
+.harness/

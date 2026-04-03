@@ -24,7 +24,7 @@
 
 **现在**：给少数关键 Agent（如你的幕僚长 / 编排者）创建一个独立 Slack App → 把它拉进任意 Agent 的频道 → 两个 Agent 直接对话，你可以实时旁观。
 
-![A2A v2 架构](docs/OpenCrew-A2A-V2-架构图.svg)
+![A2A v2 架构](docs/OpenCrew-A2A-V2.svg)
 
 这个架构借鉴了 [Anthropic Harness Design](https://www.anthropic.com/engineering/harness-design-long-running-apps) 的核心洞察：**生成者（执行）和评估者（QC）必须分离**——因为同一个 AI 既做事又自检时，它倾向于对自己宽容。在 OpenCrew 中，编排者负责规划和质量把关，执行层 Agent 负责干活，两者通过 @mention 在 Slack 频道里自然协作。
 
