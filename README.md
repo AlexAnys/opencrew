@@ -8,6 +8,7 @@
 >
 > 🤖 **To-Agent 友好**：文档结构经真实部署实测优化，你的 OpenClaw 可直接阅读并自动完成部署——最少人工介入。
 
+[![GitHub](https://img.shields.io/badge/主仓库-GitHub-black?style=flat-square&logo=github)](https://github.com/AlexAnys/opencrew)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built on OpenClaw](https://img.shields.io/badge/Built_on-OpenClaw-purple)](https://github.com/openclaw/openclaw)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#参与贡献)
@@ -443,6 +444,7 @@ opencrew/
 
 ## 相关资源
 
+- [GitHub 主仓库](https://github.com/AlexAnys/opencrew) — 主要开发与讨论在此进行
 - [OpenClaw 官方文档](https://docs.openclaw.ai/)
 - [OpenClaw Slack 集成文档](https://docs.openclaw.ai/zh-CN/channels/slack)
 - [OpenClaw 飞书集成文档](https://docs.openclaw.ai/channels/feishu)
