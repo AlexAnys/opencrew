@@ -16,3 +16,5 @@ Thumbs.db
 *.env
 secrets/
 credentials/
+.harness/
+CLAUDE.md
