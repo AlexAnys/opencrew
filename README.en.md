@@ -14,19 +14,42 @@
 
 ---
 
-## 📢 Status Update (March 2026)
+## 📢 Status Update (April 2026)
 
-Thanks to everyone who's been following OpenCrew — the project hasn't been updated for a while, but this is an architecture I use daily. **The project is alive, and the direction hasn't changed.** Updates will come when the time is right, and I welcome Issues with your feedback and feature requests.
+### A2A v2: The Best Way for Agents to Collaborate
 
-OpenCrew is still early-stage, and many implementations aren't as efficient as they should be. But the core goal remains clear: **help everyone manage a multi-agent team that collaborates organically and iterates reliably.**
+We've resolved the biggest architectural limitation since OpenCrew's inception: **Agents can now truly collaborate** — not just dispatch tasks one-way, but discuss, review, and iterate like real colleagues.
 
-What I'm currently working on: merging kanban-style project management with chat interfaces, intelligent Agent Onboarding (distilling selection methodology from the ocean of open-source Agents and Skills so the system can auto-provision new Agents), architecture simplification (A2A currently relies on patch-level workarounds — tracking OpenClaw upstream for system-level support), and exploring memory management systems better suited for multi-agent architectures. I'm testing new tech across all fronts, but I don't want to ship unvalidated stopgap solutions — the open-source ecosystem is evolving fast, and I'll push a quality update when the time is right.
+**Before**: All Agents share one Slack bot → bot can't trigger itself → Agents could only delegate via `sessions_send`, no discussion possible.
 
-From my own experience so far, **Slack remains the best interface for multi-agent management.** I'm running 17 Agents across two machines in a single Workspace, and it's already smooth. Slack's upcoming Activity page (an email inbox-like list view) is a great fit for batch-processing Agent notifications.
+**Now**: Create an independent Slack App for at least one key Agent → invite it into any execution Agent's channel → high-level dialogue in channels + file-based real work + user reviews the final output.
 
-I believe most of you following this repo already have deep experience with Agent and AI collaboration, and are looking to create greater value in your work and life through multi-agent systems. Building on that, many of you are probably also thinking about a deeper question: **how to truly leverage Coding Agents to build production-grade applications — not just spin up a demo with tools like Lovable.** My other project **[Agent-First Development](https://github.com/AlexAnys/agent-first-dev)** is focused on exactly that — for builders from non-technical or full-stack backgrounds, with a curriculum drawing from Stanford and Chicago Booth courses. Also under active development — feel free to follow along.
+<table>
+<tr>
+<td width="50%"><img src="docs/OpenCrew-A2A-V2.svg" alt="A2A v2 Architecture"><br><sub><b>Architecture</b>: Orchestrator (independent App) enters execution Agent channels to collaborate</sub></td>
+<td width="50%"><img src="assets/screenshots/a2a-v2-discussion-demo.png" alt="A2A v2 In Action"><br><sub><b>In action</b>: Two Agents collaborating in #ops to investigate an issue (zero human intervention)</sub></td>
+</tr>
+</table>
 
-**Thanks for your patience. The next update isn't far off.**
+**Which Agents should be independent?** Pick at least one — add more as needed. Drawing from [Anthropic Harness Design](https://www.anthropic.com/engineering/harness-design-long-running-apps), high-value independent roles include:
+
+| Role | Responsibility | Why Independent? |
+|------|---------------|-----------------|
+| **CoS (Chief of Staff)** | Represents user intent, drives tasks forward | Needs to enter different Agent channels to ensure alignment with user goals |
+| **Planner / Coordinator** | Expands requirements into acceptance criteria, controls pace | Must interact with multiple execution Agents; planning can't be self-served |
+| **QA / Evaluator** | Independent quality review | An AI that both executes and self-reviews tends to be lenient on itself — QC must be separated |
+
+> Minimum: pick **one** Agent as an independent App (covering the above roles), and you're ready to collaborate.
+
+**Setup in three steps**: Create an independent Slack App → configure multi-account → invite the bot into target channels. Details → [Discussion Mode Setup Guide](docs/A2A_SETUP_GUIDE.md)
+
+> **Model compatibility**: Collaboration discipline (@mention checking, round counting, NO_REPLY) relies on prompt rules, not system enforcement. Tested stable with Claude Opus 4.6. For other models, test in a low-risk channel first. Details → [Known Limitations](shared/A2A_PROTOCOL.md#7-已知限制)
+
+> Technical details → [A2A Protocol v2](shared/A2A_PROTOCOL.md) · [Core Concepts](docs/en/CONCEPTS.md#two-a2a-modes-delegation-and-discussion)
+
+### Coming Next: Agent Blueprints — On-Demand Agent Onboarding
+
+The author has onboarded ~10 new Agents through the OpenCrew framework for various tasks. An **Agent Blueprint repository** is in development — in the future, you'll just describe your needs + add a Slack channel, and the system will automatically onboard a new Agent into your team.
 
 ---
 
@@ -220,9 +243,14 @@ OpenCrew runs on a few key mechanisms. Here's the 30-second overview — full de
 | P | Project (multi-step, multi-day) | Yes + Checkpoint |
 | S | System change | Yes + Ops audit |
 
-**A2A Two-Step Trigger** — How agents collaborate
+**A2A Two Modes** — How agents collaborate
 
-Since all agents share one Slack bot, the bot's own messages don't trigger itself. So cross-agent collaboration takes two steps: first post a visible message in the target channel (anchor), then use `sessions_send` to actually trigger the other agent. Details at → [A2A Protocol](shared/A2A_PROTOCOL.md)
+| Mode | Use Case | Mechanism | Platform |
+|------|----------|-----------|----------|
+| **Delegation** | Dispatch specific tasks | `sessions_send` two-step trigger | Slack / Discord / Feishu |
+| **Discussion** | Multi-party discussion, review, negotiation | Independent Bot @mention conversation | Slack |
+
+Delegation is the foundation — CTO assigns work to Builder. Discussion is the enhancement — the Orchestrator walks into CTO's channel, and the two Agents discuss the approach while you watch. Details at → [A2A Protocol v2](shared/A2A_PROTOCOL.md)
 
 **Three-Layer Knowledge Distillation** — How chat history becomes organizational assets
 
@@ -237,11 +265,17 @@ Layer 2: KO-distilled abstract knowledge (principles / patterns / lessons learne
 ## Enable A2A Closed-Loop
 
 > After deployment, each Agent replying independently ≠ Agents collaborating with each other.
-> A2A (Agent-to-Agent) closed-loop requires additional configuration and validation.
+> A2A (Agent-to-Agent) requires additional configuration. OpenCrew supports two modes:
 
-### What is an A2A Closed-Loop?
+### Delegation — Dispatch Tasks
 
 You give CTO a dev task in `#cto` → CTO automatically dispatches to Builder in `#build` → Builder executes in rounds within the thread → each round's progress is visible in Slack → CTO reports back to `#cto`. **You only need to watch Slack.**
+
+### Discussion — Multi-Agent Collaboration `NEW`
+
+Pick an Agent as your orchestrator (e.g., CoS), create an independent Slack App for it → invite it into CTO's and Builder's channels → the orchestrator @mentions execution Agents to start a discussion → execution Agents respond → the orchestrator evaluates, asks follow-ups, or closes → **what you see is two Agents discussing a problem in Slack like colleagues.**
+
+> Why separate roles? Drawing from Anthropic Harness Design: an AI that both executes and self-reviews tends to be lenient on itself. The orchestrator focuses on planning and QC, execution Agents focus on doing the work — this is the key division that makes AI collaboration genuinely effective.
 
 ### Let Your Agent Handle A2A Setup
 
@@ -282,7 +316,7 @@ Full guide (with config examples and validation steps) → [A2A Setup Guide](doc
 | **[Full Getting Started Guide](docs/en/GETTING_STARTED.md)** | Zero-to-running detailed steps + common issues | First-time deployment |
 | **[Core Concepts Deep Dive](docs/en/CONCEPTS.md)** | Complete explanation of Autonomy Ladder, QAPS, A2A, Knowledge Distillation | Want to deeply understand the system |
 | **[Architecture Design](docs/en/ARCHITECTURE.md)** | Three-layer architecture, design trade-offs, rationale | Want to understand design decisions |
-| **[A2A Setup Guide](docs/en/A2A_SETUP_GUIDE.md)** | A2A config, workspace patches, validation steps | Enable cross-agent collaboration |
+| **[A2A Setup Guide](docs/en/A2A_SETUP_GUIDE.md)** | Delegation + Discussion config, multi-account setup, validation steps | Enable cross-agent collaboration |
 | **[Customization Guide](docs/en/CUSTOMIZATION.md)** | Add/remove/modify agents, swap domain experts | Want to adjust your team setup |
 | **[Known Issues](docs/en/KNOWN_ISSUES.md)** | Real system boundaries and current best practices | When you hit weird behavior |
 | **[The Journey](docs/en/JOURNEY.md)** | From one person's pain point to a virtual team | Want the backstory |
@@ -306,7 +340,8 @@ Full guide (with config examples and validation steps) → [A2A Setup Guide](doc
 ### ✅ Stable and Running
 
 - Multi-agent domain separation + channel binding (Slack / Feishu / Discord)
-- A2A two-step trigger (Slack visible anchor + sessions_send)
+- A2A Delegation (two-step trigger: Slack visible anchor + `sessions_send`)
+- A2A Discussion (independent Bot @mention collaboration, Slack verified) `NEW`
 - A2A closed-loop (multi-round WAIT discipline + dual-channel trace + closed-loop DoD)
 - Closeout / Checkpoint enforced structured outputs
 - Autonomy Ladder (L0–L3)
@@ -317,7 +352,7 @@ Full guide (with config examples and validation steps) → [A2A Setup Guide](doc
 
 - Better knowledge system (cross-session semantic retrieval)
 - Lighter architecture (v2-lite: 7 agents → 5, 9 shared files → 3)
-- More stable approach for Slack root message independent sessions
+- Discord Discussion mode (blocked by OpenClaw code-level bug, not a platform limitation)
 
 ---
 
