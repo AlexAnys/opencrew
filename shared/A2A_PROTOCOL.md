@@ -302,6 +302,7 @@ Discussion 模式下，CoS-Bot 进入其他 Agent 的频道（如 #cto、#build�
 6. **`requireMention: true` 在 Thread 内被绕过**：`implicitMention`（thread participation）会永久绕过 `requireMention`。需要 OpenClaw 增加 `thread.requireExplicitMention` 选项才能从系统层解决。
 7. **Input token 无法避免**：Thread 中所有消息都会送达所有 bot，Prompt 规则只让 agent 回复 NO_REPLY，但 input token 消耗不可避免。
 8. **多账号 `accounts.default` 必须显式声明**：详见附录 A 的警告。实战中因遗漏导致过 ~13h 全 Agent 断连。
+9. **模型兼容性**：Discussion 模式的协作纪律（显式 @mention 检查、NO_REPLY、轮次计数、终止判断）完全依赖 Agent 对 Prompt 规则的遵循能力，并非 OpenClaw 配置层强制。使用 Claude Opus 4.6 实测从未出现失控循环，但不同模型的 instruction following 能力有差异。建议首次使用时在低风险频道测试，留意 Agent 是否出现重复对话或忽略 NO_REPLY 的情况。
 
 ---
 
