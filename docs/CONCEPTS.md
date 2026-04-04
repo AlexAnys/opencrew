@@ -65,112 +65,69 @@ Agent 不是所有事都要问你。Autonomy Ladder 定义了"什么时候 Agent
 
 ---
 
-## 4. A2A 两步触发
+## 4. A2A — Agent 之间的原生协作
 
-Agent 之间的协作需要一个特殊机制，因为所有 Agent 共用一个 Slack bot 身份——bot 自己发的消息不会触发自己。
+OpenCrew 默认所有 Agent 共享一个 Slack bot 身份，bot 自己发的消息会被自己忽略（防自循环）。这导致 Agent 之间无法在 Slack 中直接对话。
 
-### 为什么需要两步？
+### 解决方案：选择性独立化
 
-```
-问题：CTO 在 #build 发了一条消息给 Builder
-      → Slack 认为这是 bot 发的
-      → Bot 默认忽略自己的消息
-      → Builder 没收到
-```
-
-### 两步触发怎么工作
-
-**Step 1：在目标频道创建可见的 root message（锚点）**
-
-CTO 在 `#build` 发一条消息，格式如：
+让少数 Agent 拥有**独立 Slack App**，然后拉进其他 Agent 的频道直接对话：
 
 ```
-A2A cto→builder | 实现登录功能 | TID:20260210-1430-login
----
-目标：在用户系统中增加 OAuth 登录
-完成标准：单元测试通过、兼容 Google/GitHub
+         独立 Slack App              共享 Slack App (现有)
+         ┌──────────────┐           ┌─────────────────┐
+         │ Orchestrator │           │   Default-Bot   │
+         └──────┬───────┘           └───┬───┬───┬─────┘
+                │                       │   │   │
+频道：  #home  #cto  #build          #cto #build #invest ...
+        ──────────────────────────────────────────────────
+Agent：  Orch  ← 进入协作 →          CTO  Builder  CIO ...
 ```
 
-这条消息是给你看的——你随时能在 Slack 里看到"CTO 给 Builder 派了什么活"。
+不需要每个 Agent 都有独立 App——执行层继续共享。只让需要跨域协作的 Agent（如 Orchestrator）拥有独立 App，把它拉进目标频道就能直接对话。你可以在 Slack 中实时旁观讨论、随时插话。
 
-**Step 2：用 sessions_send 触发 Builder**
+### 为什么要分离 Orchestrator 和 Worker
 
-CTO 调用 `sessions_send()`，把消息推给 Builder 在该 thread 的 session。这才是真正让 Builder "动起来"的信号。
+借鉴 **Anthropic Harness Design** 的核心洞察：
 
-### 防循环保护
+- 当一个 AI **既做执行又做 QA** 时，它倾向于宽容自己的错误
+- 当一个 AI **既做规划又做执行** 时，它倾向于投机取巧
 
-三层保护，防止 Agent 互相触发导致消息风暴：
+将"想"和"做"分给不同 Agent——Orchestrator 负责规划和评估，Worker 负责实现——是解决 AI 自评失效最有效的杠杆。
 
-| 保护层 | 机制 | 配置位置 |
-|--------|------|---------|
-| 权限矩阵 | 只有 CoS/CTO/Ops 能发起 A2A | `tools.agentToAgent.allow` |
-| 来回上限 | 最多 4 次 ping-pong | `maxPingPongTurns = 4` |
-| 子 Agent 限制 | 被 spawn 的子 Agent 不能再发起 A2A | `tools.subagents.tools.deny` |
-
-### 权限矩阵
-
-不是所有 Agent 都能给所有人派活。遵循组织纪律：
+### 协作流程
 
 ```
-CoS → CTO（战略指导）
-CTO → Builder / Research / KO（任务分发）
-Ops → 所有人（审计权限）
-Builder → 不能派单（只接单执行）
-CIO → 独立运作（必要时与 CoS 同步）
+你 → @Orchestrator: "讨论 X 方案"
+
+Phase 0: Orchestrator 展开 DISCUSSION SPEC（目标 + 验收标准）
+Round 1: Orchestrator → @Worker: 问题
+         Worker → @Orchestrator: 回答
+Round 2: Orchestrator 评估 → 继续 / 终止
+...
+终止: ✅ 标准满足 | ⚠️ 到限 | 🔄 无进展 → DISCUSSION_CLOSE
 ```
 
-### A2A 的两种模式：Delegation 与 Discussion
+### 防循环：两层防线
 
-上面描述的两步触发是 **Delegation（委派）** 模式——一个 Agent 通过 `sessions_send` 把结构化任务交给另一个 Agent。这是 A2A 的基础，所有平台都支持，流程清晰、单向可控。
+| 层级 | 机制 | 作用范围 | 类型 |
+|------|------|----------|------|
+| Config | `requireMention: true` | Channel 根消息 | 硬约束 |
+| Prompt | 显式 @mention 协议 | Thread 内 | 软约束 |
 
-v2 引入了第二种模式：**Discussion（讨论）**。少数高价值 Agent（如 Orchestrator）拥有独立 Slack App，直接进入其他 Agent 的频道进行实时讨论。
+Thread 内 `requireMention` 会被 `implicitMention` 绕过（bot 参与过 thread 后永远为 true）。因此每个参与讨论的 Agent 还需要 Prompt 规则：收到消息时检查是否有显式 `<@自己的BotID>`，没有就回复 NO_REPLY。
 
-**核心思路：选择性独立化。** 不需要每个 Agent 都有独立 App——执行层（CTO、Builder、CIO 等）继续共享一个 Slack App。只让需要跨域协作的 Agent（如 Orchestrator）拥有独立 App，把它拉进目标频道就能直接对话。
+### 平台支持
 
-这里借鉴了 **Anthropic Harness Design** 的核心洞察：当一个 AI 既做执行又做 QA 时，它倾向于宽容自己的错误；既做规划又做执行时，倾向于投机取巧。将"想"和"做"分给不同 Agent——Orchestrator 负责规划和评估，执行层 Agent 负责实现——是解决 AI 自评失效最有效的杠杆。
+| 平台 | A2A v2（原生协作） |
+|------|-------------------|
+| **Slack** | ✅ 已验证 |
+| **Discord** | ❌ OpenClaw 代码层 bug（#11199、#45300） |
+| **Feishu** | ❌ 平台限制（bot 消息不投递给其他 bot） |
 
-**什么时候用哪个？**
+> Discord/Feishu 用户如需 Agent 间协作，可参考 `shared/A2A_PROTOCOL.md` 附录 C（旧版 Delegation 模式）。
 
-| | Delegation（委派） | Discussion（讨论） |
-|--|-------------------|-------------------|
-| 场景 | "CTO 给 Builder 派一个具体任务" | "Orchestrator 进 #cto 跟 CTO 讨论方案，然后去 #build 跟 Builder 确认可行性" |
-| 触发方式 | `sessions_send` | 显式 @mention |
-| 方向性 | 单向，一对一 | 多向，多对多 |
-| 平台 | Slack / Discord / Feishu | 仅 Slack（需独立 App） |
-
-两种模式共存，不互相替代。Delegation 是"给任务"，Discussion 是"一起想"。
-
-**为什么需要 Discussion？** Delegation 是任务分发：CTO 说做什么，Builder 照做。但真实团队不只是派活——他们讨论。Orchestrator 走进 CTO 的办公室说"这个方向你怎么看？"，CTO 说"技术上可以但成本高"，Orchestrator 又去问 Builder"你觉得多久能做完？"。Discussion 模式让 Agent 也能这样协作——Orchestrator-Bot 被拉进 #cto 频道，直接在 CTO 的地盘上对话，你可以实时旁观、随时插话。
-
-### 平台能力对比
-
-| 能力 | Slack | Discord | Feishu |
-|------|-------|---------|--------|
-| Delegation（sessions_send） | ✅ | ✅ | ✅ |
-| Discussion（跨 bot 对话）| ✅ 已验证 | 不支持（OpenClaw 代码层 bug） | 不支持（飞书平台限制） |
-| Thread / Topic 隔离 | 原生 thread | Thread（自动归档） | groupSessionScope（>= 2026.3.1） |
-
-**为什么 Discord 和 Feishu 不支持 Discussion？**
-
-- **Discord**：平台本身支持跨 bot 消息可见，但 OpenClaw 的 bot 消息过滤代码存在 bug（Issue #11199），把所有已配置的 bot 都当作"自己"并丢弃消息。属于代码层问题，理论上可修复，但修复 PR 均已关闭。
-- **Feishu**：飞书的 `im.message.receive_v1` 事件**只投递用户发送的消息**——bot 发的消息对其他 bot 完全不可见。这是飞书平台 API 的设计决策，无法通过配置绕过。
-
-### Discussion 模式的当前状态
-
-Discussion 模式已通过端到端验证（2026-04-02）。两个独立 bot 可以在同一频道互相看到消息并进行结构化讨论。
-
-通过 OpenClaw 源码验证 + 实测确认：
-- Self-loop 过滤是 per-account 的（不同 Slack App 不互相过滤）✅
-- `allowBots` 支持三级 fallback（per-channel > per-account > global）✅
-- Per-account channel config 可以给同一频道的不同 bot 设置不同的 `requireMention` ✅
-- 多账号配置需要**同时声明 `accounts.default`**（否则主 bot 断连）⚠️
-
-**实战发现的限制**：
-- `requireMention: true` 在 Thread 内被 `implicitMention` 绕过——需要 Prompt 规则配合
-- `allowBots: "mentions"` 在 Slack 无效（仅 Discord 支持）
-- Input token 无法避免——所有消息送达所有 bot，只能让 agent 回复 NO_REPLY
-
-详细配置指南和陷阱清单见 [Discussion Mode 实操指南](A2A_SETUP_GUIDE.md)。完整协议见 `shared/A2A_PROTOCOL.md`。
+详细配置指南见 [Discussion Mode 实操指南](A2A_SETUP_GUIDE.md)。完整协议见 `shared/A2A_PROTOCOL.md`。
 
 ---
 
@@ -181,7 +138,7 @@ Discussion 模式已通过端到端验证（2026-04-02）。两个独立 bot 可
 每个 A/P/S 类任务完成后，执行者必须写一份 10-15 行的 Closeout：
 
 ```
-CLOSEOUT A | 实现速率限制 | TID:20260210-1400-ratelimit
+CLOSEOUT A | 实现速率限制 | 20260210
 ---
 ## 做了什么
 - 在 API gateway 中新增 Token Bucket 限流
@@ -208,7 +165,7 @@ CLOSEOUT A | 实现速率限制 | TID:20260210-1400-ratelimit
 对于跨天的 P 类任务，每天或每个关键节点写一次：
 
 ```
-CHECKPOINT P | 数据库迁移 | TID:20260210-0900-dbmigrate | Progress: 40%
+CHECKPOINT P | 数据库迁移 | 20260210 | Progress: 40%
 ---
 已完成：✅ schema 设计 ✅ 测试环境搭建
 进行中：🔄 数据迁移脚本（50%）
@@ -278,7 +235,7 @@ Layer 2: 抽象知识
 | 文件 | 内容 |
 |------|------|
 | `SYSTEM_RULES.md` | Autonomy Ladder + QAPS + 产物要求 |
-| `A2A_PROTOCOL.md` | 跨 Agent 协作的两步触发 + 权限矩阵 |
+| `A2A_PROTOCOL.md` | 原生 Agent 协作协议（独立 Bot + @mention） |
 | `TASK_PROTOCOL.md` | 任务分类和处理规范 |
 | `CLOSEOUT_TEMPLATE.md` | Closeout 模板 |
 | `CHECKPOINT_TEMPLATE.md` | Checkpoint 模板 |
@@ -297,13 +254,13 @@ Layer 2: 抽象知识
 
 | 约束 | 类型 | 配置项 | 为什么需要 |
 |------|------|--------|-----------|
-| A2A 发起权限 | 硬约束 | `tools.agentToAgent.allow` | 防止所有人都能派单 |
-| A2A 循环上限 | 硬约束 | `maxPingPongTurns` | 防止消息风暴 |
+| Bot 消息可见 | 硬约束 | `allowBots: true` | Agent 间协作的前提 |
+| 显式触发 | 硬约束 | `requireMention: true` | 防止 Channel 根消息双触发 |
 | Subagent 权限 | 硬约束 | `tools.subagents.tools.deny` | 子 Agent 不能再 spawn |
 | 频道隔离 | 硬约束 | `groupPolicy = "allowlist"` | 只响应允许的频道 |
 | Thread 隔离 | 硬约束 | `historyScope = "thread"` | 每个 thread 独立 session |
 | 回复模式 | 硬约束 | `replyToMode = "all"` | 回复自动进 thread |
-| Ops 降噪 | 可选 | `requireMention = true` | 建议对 #ops/#know 开启 |
+| 多账号安全 | 硬约束 | `accounts.default` 必须显式声明 | 防止主 bot 断连 |
 
 **实践建议**：能写进 config 的约束就不要只写在文档里。文档层的规则 Agent 可能"忘记"，配置层的规则无法绕过。
 
@@ -323,9 +280,8 @@ Layer 2: 抽象知识
   ├─ 任务按 QAPS 分类处理
   │   └─ Q 轻量处理，A/P/S 必须 Closeout
   │
-  ├─ Agent 之间通过 A2A 协作
-  │   ├─ Delegation：两步触发 + 权限矩阵
-  │   └─ Discussion：@mention 多 Agent 讨论 [已验证]
+  ├─ Agent 之间通过 A2A 原生协作
+  │   └─ 独立 Bot + @mention 协议 [已验证]
   │
   └─ 知识通过三层沉淀积累
       └─ 对话 → Closeout → KO 抽象知识

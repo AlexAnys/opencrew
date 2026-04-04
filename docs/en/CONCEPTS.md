@@ -65,112 +65,69 @@ Different types of tasks require different levels of rigor. QAPS tells Agents "h
 
 ---
 
-## 4. A2A Two-Step Trigger
+## 4. A2A — Native Agent Collaboration
 
-Agent-to-Agent collaboration requires a special mechanism because all Agents share a single Slack bot identity -- the bot won't trigger on its own messages.
+By default, all Agents in OpenCrew share a single Slack bot identity -- the bot ignores its own messages (to prevent self-loops). This means Agents cannot directly talk to each other in Slack.
 
-### Why Two Steps?
+### Solution: Selective Independence
 
-```
-Problem: CTO posts a message in #build for Builder
-         -> Slack sees it as a bot message
-         -> Bot ignores its own messages by default
-         -> Builder never receives it
-```
-
-### How the Two-Step Trigger Works
-
-**Step 1: Create a visible root message (anchor) in the target channel**
-
-CTO posts a message in `#build`, formatted like:
+Give a few Agents their own **independent Slack App**, then invite them into other Agents' channels for direct @mention conversations:
 
 ```
-A2A cto->builder | Implement login feature | TID:20260210-1430-login
----
-Goal: Add OAuth login to the user system
-Done criteria: Unit tests pass, compatible with Google/GitHub
+         Independent Slack App       Shared Slack App (existing)
+         ┌──────────────┐           ┌─────────────────┐
+         │ Orchestrator │           │   Default-Bot   │
+         └──────┬───────┘           └───┬───┬───┬─────┘
+                │                       │   │   │
+Channels: #home  #cto  #build       #cto #build #invest ...
+          ──────────────────────────────────────────────────
+Agents:   Orch  ← collaborates →    CTO  Builder  CIO ...
 ```
 
-This message is for you -- you can always see in Slack "what task did CTO assign to Builder."
+Not every Agent needs its own App -- execution-layer Agents keep sharing. Only cross-domain Agents (like the Orchestrator) get their own App. You can watch the discussion in Slack in real-time and intervene at any point.
 
-**Step 2: Use sessions_send to trigger Builder**
+### Why Separate Orchestrator and Worker
 
-CTO calls `sessions_send()`, pushing the message to Builder's session in that thread. This is what actually makes Builder "start working."
+Borrows a core insight from **Anthropic's Harness Design**:
 
-### Loop Prevention
+- When an AI **both executes and does QA**, it goes easy on its own mistakes
+- When an AI **both plans and executes**, it tends to cut corners
 
-Three layers of protection prevent Agents from triggering each other in a message storm:
+Separating "thinking" and "doing" into different Agents -- Orchestrator handles planning and evaluation, Worker handles implementation -- is the most effective lever for solving AI self-evaluation failure.
 
-| Protection Layer | Mechanism | Configuration |
-|------------------|-----------|---------------|
-| Permission matrix | Only CoS/CTO/Ops can initiate A2A | `tools.agentToAgent.allow` |
-| Round-trip limit | Max 4 ping-pong exchanges | `maxPingPongTurns = 4` |
-| Sub-Agent restriction | Spawned sub-Agents cannot initiate A2A | `tools.subagents.tools.deny` |
-
-### Permission Matrix
-
-Not every Agent can assign tasks to everyone. Follow organizational discipline:
+### Collaboration Flow
 
 ```
-CoS -> CTO (strategic guidance)
-CTO -> Builder / Research / KO (task distribution)
-Ops -> Everyone (audit privileges)
-Builder -> Cannot assign tasks (receives and executes only)
-CIO -> Operates independently (syncs with CoS when needed)
+You → @Orchestrator: "Discuss approach X"
+
+Phase 0: Orchestrator creates DISCUSSION SPEC (goals + acceptance criteria)
+Round 1: Orchestrator → @Worker: question
+         Worker → @Orchestrator: answer
+Round 2: Orchestrator evaluates → continue / terminate
+...
+Termination: ✅ criteria met | ⚠️ max rounds | 🔄 no progress → DISCUSSION_CLOSE
 ```
 
-### Two A2A Modes: Delegation and Discussion
+### Loop Prevention: Two-Layer Defense
 
-The two-step trigger described above is the **Delegation** mode -- one Agent hands a structured task to another via `sessions_send`. This is the foundation of A2A, supported on all platforms, with a clear one-directional flow.
+| Layer | Mechanism | Scope | Type |
+|-------|-----------|-------|------|
+| Config | `requireMention: true` | Channel root messages | Hard constraint |
+| Prompt | Explicit @mention protocol | Within threads | Soft constraint |
 
-v2 introduces a second mode: **Discussion**. A small number of high-value Agents (e.g., Orchestrator) get their own independent Slack App, then join other Agents' channels to collaborate in real-time.
+In threads, `requireMention` is bypassed by `implicitMention` (once a bot has participated, it's always true). So each participating Agent also needs prompt rules: check for explicit `<@MyBotID>` in the message text, respond NO_REPLY if absent.
 
-**Core idea: selective independence.** Not every Agent needs its own App -- execution-layer Agents (CTO, Builder, CIO, etc.) keep sharing one Slack App. Only Agents that need cross-domain collaboration (like the Orchestrator) get their own App, then get invited into target channels for direct conversation.
+### Platform Support
 
-This borrows a core insight from **Anthropic's Harness Design**: when an AI both executes and does QA, it tends to go easy on its own mistakes; when it both plans and executes, it tends to cut corners. Separating "thinking" and "doing" into different Agents -- Orchestrator handles planning and evaluation, execution-layer Agents handle implementation -- is the most effective lever for solving AI self-evaluation failure.
+| Platform | A2A v2 (Native Collaboration) |
+|----------|-------------------------------|
+| **Slack** | ✅ Verified |
+| **Discord** | ❌ OpenClaw code-level bug (#11199, #45300) |
+| **Feishu** | ❌ Platform limitation (bot messages not delivered to other bots) |
 
-**When to use which?**
+> Discord/Feishu users needing Agent collaboration can refer to `shared/A2A_PROTOCOL.md` Appendix C (legacy Delegation mode).
 
-| | Delegation | Discussion |
-|--|------------|------------|
-| Scenario | "CTO assigns a specific task to Builder" | "Orchestrator walks into #cto to discuss the approach with CTO, then checks feasibility with Builder in #build" |
-| Trigger | `sessions_send` | Explicit @mention |
-| Directionality | One-way, one-to-one | Multi-directional, many-to-many |
-| Platform | Slack / Discord / Feishu | Slack only (requires independent App) |
-
-The two modes coexist -- they do not replace each other. Delegation is for "assign the work." Discussion is for "think it through together."
-
-**Why Discussion?** Delegation is task distribution: CTO says what to do, Builder executes. But real teams don't just assign tasks -- they discuss. The Orchestrator walks into CTO's office and asks "what do you think about this direction?", CTO says "technically feasible but expensive", then the Orchestrator asks Builder "how long would this take?". Discussion mode lets Agents work the same way -- the Orchestrator-Bot gets invited into #cto and talks directly on CTO's home turf. You can watch in real-time and intervene at any point.
-
-### Platform Capability Comparison
-
-| Capability | Slack | Discord | Feishu |
-|------------|-------|---------|--------|
-| Delegation (sessions_send) | YES | YES | YES |
-| Discussion (cross-bot) | ✅ Verified | Not supported (OpenClaw code-level bug) | Not supported (platform limitation) |
-| Thread / Topic isolation | Native thread | Thread (auto-archive) | groupSessionScope (>= 2026.3.1) |
-
-**Why can't Discord and Feishu support Discussion?**
-
-- **Discord**: The platform itself supports cross-bot message visibility, but OpenClaw's bot message filter (Issue #11199) treats ALL configured bots as "self" and drops their messages. This is a code-level bug, not a platform limitation -- but fix PRs have all been closed.
-- **Feishu**: Feishu's `im.message.receive_v1` event **only delivers user-sent messages** -- bot messages are completely invisible to other bots. This is a platform API design decision and cannot be worked around through configuration.
-
-### Current Status of Discussion Mode
-
-Discussion mode has been verified end-to-end (2026-04-02). Two independent bots can see each other's messages in the same channel and conduct structured discussions.
-
-Through OpenClaw source code verification + live testing:
-- Self-loop filtering is per-account (different Slack Apps don't filter each other) ✅
-- `allowBots` supports three-tier fallback (per-channel > per-account > global) ✅
-- Per-account channel config can give different bots different `requireMention` settings ✅
-- Multi-account config requires **explicit `accounts.default` declaration** (otherwise main bot disconnects) ⚠️
-
-**Limitations discovered in practice**:
-- `requireMention: true` is bypassed in threads by `implicitMention` -- requires prompt rules to compensate
-- `allowBots: "mentions"` does not work on Slack (Discord only)
-- Input token cost is unavoidable -- all messages reach all bots; agents can only reply NO_REPLY
-
-For detailed setup guide and pitfall checklist, see [Discussion Mode Setup Guide](A2A_SETUP_GUIDE.md). Full protocol in `shared/A2A_PROTOCOL.md`.
+For detailed setup guide, see [Discussion Mode Setup Guide](A2A_SETUP_GUIDE.md). Full protocol in `shared/A2A_PROTOCOL.md`.
 
 ---
 
@@ -278,7 +235,7 @@ The `shared/` directory holds the "employee handbook" shared by all Agents -- un
 | File | Content |
 |------|---------|
 | `SYSTEM_RULES.md` | Autonomy Ladder + QAPS + artifact requirements |
-| `A2A_PROTOCOL.md` | Two-step trigger for cross-Agent collaboration + permission matrix |
+| `A2A_PROTOCOL.md` | Native Agent collaboration protocol (independent Bot + @mention) |
 | `TASK_PROTOCOL.md` | Task classification and handling standards |
 | `CLOSEOUT_TEMPLATE.md` | Closeout template |
 | `CHECKPOINT_TEMPLATE.md` | Checkpoint template |
@@ -297,13 +254,13 @@ Some rules rely on "Agents following them voluntarily" (document layer). Others 
 
 | Constraint | Type | Config Key | Why It's Needed |
 |------------|------|------------|-----------------|
-| A2A initiation permission | Hard | `tools.agentToAgent.allow` | Prevent everyone from assigning tasks |
-| A2A loop limit | Hard | `maxPingPongTurns` | Prevent message storms |
+| Bot message visibility | Hard | `allowBots: true` | Prerequisite for Agent collaboration |
+| Explicit trigger | Hard | `requireMention: true` | Prevent channel root message dual-trigger |
 | Sub-Agent permission | Hard | `tools.subagents.tools.deny` | Sub-Agents cannot spawn further |
 | Channel isolation | Hard | `groupPolicy = "allowlist"` | Only respond in allowed channels |
 | Thread isolation | Hard | `historyScope = "thread"` | Each thread is an independent session |
 | Reply mode | Hard | `replyToMode = "all"` | Replies automatically go into threads |
-| Ops noise reduction | Optional | `requireMention = true` | Recommended for #ops/#know |
+| Multi-account safety | Hard | `accounts.default` must be declared | Prevent main bot disconnection |
 
 **Practical advice**: If a constraint can go into config, don't just put it in documentation. Document-layer rules can be "forgotten" by Agents. Config-layer rules cannot be bypassed.
 
@@ -323,9 +280,8 @@ You (decision-maker)
   |-- Tasks are classified and handled via QAPS
   |     +-- Q gets lightweight handling; A/P/S require Closeout
   |
-  |-- Agents collaborate via A2A
-  |     |-- Delegation: two-step trigger + permission matrix
-  |     +-- Discussion: @mention multi-agent deliberation [Verified]
+  |-- Agents collaborate via A2A native collaboration
+  |     +-- Independent Bot + @mention protocol [Verified]
   |
   +-- Knowledge accumulates through three-layer distillation
         +-- Conversation -> Closeout -> KO abstract knowledge
