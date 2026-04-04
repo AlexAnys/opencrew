@@ -69,47 +69,41 @@ Slack 的产品特性天然匹配多 Agent 协作需求：
 | 频道 | = Agent 岗位，一个 App 管所有 Agent |
 | Thread | = 独立 Session，天然上下文隔离 |
 | Unreads / Later | = 决策待办清单，一目了然 |
-| A2A 跨频道输出 | 所有协作过程可见、完全可审计 |
+| A2A 跨频道协作 | Orchestrator 进入其他频道讨论，可见可审计 |
 | 草稿 / 已发送追踪 | Thread 回溯完整链路 |
 | 手机端 | 随时审批·随地决策，碎片时间=管理时间 |
 | 增减频道 | Agent↔频道即插即拔，灵活扩缩 |
 
-## A2A 两步触发机制
+## A2A 原生协作
 
-### 为什么需要两步？
+### 核心思路
 
-OpenClaw 的 Slack 集成中，所有 Agent 共用一个 bot 身份。bot 发出的消息默认被自己忽略（防自循环）。因此 Agent A 在 Slack 里发的消息，Agent B 不会自动处理。
+所有 Agent 共用一个 Slack bot 身份 → bot 自己发的消息被自己忽略 → Agent 之间无法直接对话。
 
-解法是**两步触发**：
-
-```
-Step 1: Agent A 在 Agent B 的频道创建 root message（Slack 可见锚点）
-Step 2: Agent A 调用 sessions_send() 触发 Agent B（真正的执行信号）
-```
-
-### Session Key 结构
+**解决方案：选择性独立化。** 让 Orchestrator 拥有独立 Slack App，拉进其他 Agent 的频道直接 @mention 对话。
 
 ```
-agent:<target_agent_id>:slack:channel:<channelId>:thread:<root_ts>
+Orchestrator（独立 App）进入 #cto → @CTO 发起讨论
+CTO（默认 Bot）在 thread 中回复 → @Orchestrator
+Orchestrator 评估 → 继续 @CTO / 进 #build @Builder / 终止
 ```
 
-这个 key 确保 Agent B 在该 thread 的上下文中执行，实现了 thread 级别的 session 隔离。
+### 防循环：两层防线
 
-### 防循环三层保护
+1. **Config 层**：`requireMention: true`（Channel 根消息必须显式 @）
+2. **Prompt 层**：@mention 协议（Thread 内检查显式 `<@BotID>`，没有就 NO_REPLY）
 
-1. **权限矩阵**：只有 CoS/CTO/Ops 可以发起 sessions_send（config 层硬约束）
-2. **maxPingPongTurns = 4**：限制 A2A 来回次数（config 层硬约束）
-3. **Subagent deny sessions**：子 Agent 不能再 spawn sessions（config 层硬约束）
+> 详细协议见 `shared/A2A_PROTOCOL.md`；配置指南见 `docs/A2A_SETUP_GUIDE.md`。
 
 ## 信息流
 
 ### 任务分派流（多种路径并存）
 
 ```
-路径 1（直接）：User → #cto (CTO) → 拆解 → A2A → #build (Builder)
-路径 2（经 CoS）：User → #hq (CoS) → 评估/指派 → A2A → #cto (CTO) → ...
+路径 1（直接）：User → #cto (CTO) → 拆解 → @Builder 讨论 / spawn 执行
+路径 2（Orchestrator）：User → @Orchestrator → 进 #cto 与 CTO 讨论 → 进 #build 与 Builder 确认
 路径 3（领域）：User → #invest (CIO) → 独立处理或 spawn Research
-路径 4（CoS 代推）：CoS 主动推进 → A2A → CTO/CIO（用户授权或不在时）
+路径 4（代推）：Orchestrator 主动推进 → @CTO/@CIO（用户授权或不在时）
 ```
 
 用户不必经过 CoS——想跟谁聊就直接进那个频道。

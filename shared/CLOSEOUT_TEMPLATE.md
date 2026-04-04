@@ -1,7 +1,7 @@
 # CLOSEOUT（任务结束强制输出）
 
 ## Task
-- ID: [YYYYMMDD-序号] / TID: [可选：来自A2A thread]
+- ID: [YYYYMMDD-序号]
 - Type: [A/P/S]
 - Owner: [agent_id]
 - Thread: [Slack thread链接/或 channel + thread id]
