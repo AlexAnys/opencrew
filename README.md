@@ -8,29 +8,49 @@
 >
 > 🤖 **To-Agent 友好**：文档结构经真实部署实测优化，你的 OpenClaw 可直接阅读并自动完成部署——最少人工介入。
 
+[![GitHub](https://img.shields.io/badge/主仓库-GitHub-black?style=flat-square&logo=github)](https://github.com/AlexAnys/opencrew)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built on OpenClaw](https://img.shields.io/badge/Built_on-OpenClaw-purple)](https://github.com/openclaw/openclaw)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#参与贡献)
 
 ---
 
-## 📢 近况更新（2026 年 4 月）
+## 📢 重要更新（2026 年 4 月）
 
-### A2A v2：Agent 之间能真正讨论了
+### A2A v2：找到了 Agent 间协作的最佳方式
 
-我们解决了 OpenCrew 自诞生以来最大的架构限制：**Agent 之间现在可以像真人一样在同一个 Slack 频道里讨论问题**，而不只是单向派任务。
+我们解决了 OpenCrew 自诞生以来最大的架构限制：**Agent 之间现在可以真正协作**——不只是单向派任务，而是像同事一样讨论、评审、迭代。
 
-**之前**：所有 Agent 共享一个 Slack bot → bot 不能触发自己 → Agent 之间只能靠 `sessions_send` 单向委派。
+**之前**：所有 Agent 共享一个 Slack bot → bot 不能触发自己 → Agent 之间只能靠 `sessions_send` 单向委派任务，无法讨论。
 
-**现在**：给少数关键 Agent（如你的幕僚长 / 编排者）创建一个独立 Slack App → 把它拉进任意 Agent 的频道 → 两个 Agent 直接对话，你可以实时旁观。
+**现在**：给至少一个关键 Agent 创建独立 Slack App → 拉进任意执行 Agent 的频道 → 频道内高维度对话（方向、评审、共识）+ 基于 Markdown 文件的实际协作 + 用户 review 最终产出。
 
-![A2A v2 架构](docs/OpenCrew-A2A-V2.svg)
+<table>
+<tr>
+<td width="50%"><img src="docs/OpenCrew-A2A-V2.svg" alt="A2A v2 架构"><br><sub><b>架构</b>：编排者（独立 App）进入执行 Agent 频道协作</sub></td>
+<td width="50%"><img src="assets/screenshots/a2a-v2-discussion-demo.png" alt="A2A v2 实战"><br><sub><b>实战</b>：两个 Agent 在 #ops 协作排查问题（全程无人干预）</sub></td>
+</tr>
+</table>
 
-这个架构借鉴了 [Anthropic Harness Design](https://www.anthropic.com/engineering/harness-design-long-running-apps) 的核心洞察：**生成者（执行）和评估者（QC）必须分离**——因为同一个 AI 既做事又自检时，它倾向于对自己宽容。在 OpenCrew 中，编排者负责规划和质量把关，执行层 Agent 负责干活，两者通过 @mention 在 Slack 频道里自然协作。
+**哪些 Agent 适合独立化？** 至少选一个，也可以按需增加多个。参考 [Anthropic Harness Design](https://www.anthropic.com/engineering/harness-design-long-running-apps)，有价值的独立协作角色包括：
+
+| 角色 | 职责 | 为什么需要独立 |
+|------|------|-------------|
+| **CoS（幕僚长）** | 代表用户意图，推进任务 | 需要进入不同 Agent 的频道，确保执行方向与用户目标一致 |
+| **Planner / Coordinator** | 展开需求为验收标准，控制节奏 | 需要与多个执行 Agent 交互，规划不能由执行者自己做 |
+| **QA / Evaluator** | 独立审查产出质量 | 同一个 AI 既执行又自检时倾向于宽容自己，质检必须分离 |
+
+> 最小方案：选 **一个** Agent 做独立 App（兼顾以上角色），即可开始协作。
 
 **设置只需三步**：创建一个独立 Slack App → 配置多账号 → 把 bot 拉进目标频道。详见 → [Discussion Mode 配置指南](docs/A2A_SETUP_GUIDE.md)
 
-> 更多技术细节和实战踩坑记录 → [A2A 协议 v2](shared/A2A_PROTOCOL.md) · [核心概念](docs/CONCEPTS.md#a2a-的两种模式delegation-与-discussion)
+> **模型兼容性**：协作纪律（@mention 检查、轮次计数、NO_REPLY）依赖 Prompt 规则，非系统强制。Claude Opus 4.6 实测稳定，其他模型建议先在低风险频道测试。详见 → [已知限制](shared/A2A_PROTOCOL.md#7-已知限制)
+
+> 更多技术细节 → [A2A 协议 v2](shared/A2A_PROTOCOL.md) · [核心概念](docs/CONCEPTS.md#a2a-的两种模式delegation-与-discussion)
+
+### 下一步预告：Agent 蓝图 — 按需 Onboarding 新 Agent
+
+目前作者已通过 OpenCrew 框架 onboarding 了约 10 个新 Agent 处理不同任务。正在开发 **Agent 蓝图仓库**——未来你只需要描述需求 + 在 Slack 里加一个频道，就能自动将新 Agent onboarding 到你的团队中，无需手动配置 workspace 文件。
 
 ---
 
@@ -450,6 +470,7 @@ opencrew/
 
 ## 相关资源
 
+- [GitHub 主仓库](https://github.com/AlexAnys/opencrew) — 主要开发与讨论在此进行
 - [OpenClaw 官方文档](https://docs.openclaw.ai/)
 - [OpenClaw Slack 集成文档](https://docs.openclaw.ai/zh-CN/channels/slack)
 - [OpenClaw 飞书集成文档](https://docs.openclaw.ai/channels/feishu)
@@ -457,6 +478,16 @@ opencrew/
 - [OpenClaw Heartbeat 文档](https://docs.openclaw.ai/zh-CN/gateway/heartbeat)
 
 ---
+
+## 📈 Star History
+
+<a href="https://star-history.com/#AlexAnys/opencrew&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=AlexAnys/opencrew&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=AlexAnys/opencrew&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=AlexAnys/opencrew&type=Date" />
+ </picture>
+</a>
 
 ## License
 
