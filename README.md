@@ -46,7 +46,7 @@
 
 > **模型兼容性**：协作纪律（@mention 检查、轮次计数、NO_REPLY）依赖 Prompt 规则，非系统强制。Claude Opus 4.6 实测稳定，其他模型建议先在低风险频道测试。详见 → [已知限制](shared/A2A_PROTOCOL.md#7-已知限制)
 
-> 更多技术细节 → [A2A 协议 v2](shared/A2A_PROTOCOL.md) · [核心概念](docs/CONCEPTS.md#a2a-的两种模式delegation-与-discussion)
+> 更多技术细节 → [A2A 协议 v2](shared/A2A_PROTOCOL.md) · [核心概念](docs/CONCEPTS.md#4-a2a--agent-之间的原生协作)
 
 ### 下一步预告：Agent 蓝图 — 按需 Onboarding 新 Agent
 
@@ -315,17 +315,17 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 把下面这段发给你的任一 Agent：
 
 ```
-请帮我跑通 A2A Delegation。
+请帮我跑通 A2A Delegation（旧版委派模式）。
 
-参考文档：请读仓库里的 docs/A2A_SETUP_GUIDE.md
+参考文档：请读仓库里的 shared/A2A_PROTOCOL.md 附录 C（旧版 Delegation）
 
 当前状态：
 - OpenCrew 已部署，各 Agent 在自己频道能正常回复
 - 我的 Slack 频道：#hq(CoS) #cto(CTO) #build(Builder)
 
-请按 A2A_SETUP_GUIDE.md 的步骤：
-1. 检查并补全 openclaw.json 中的 A2A 配置（agentToAgent.allow / maxPingPongTurns）
-2. 给 CoS、CTO 和 Builder 的 AGENTS.md 追加 A2A 协作 section（最小增量，不要重写）
+请按附录 C 的说明：
+1. 检查并补全 openclaw.json 中的 Delegation 配置（agentToAgent.allow / maxPingPongTurns）
+2. 给 CoS、CTO 和 Builder 的 AGENTS.md 追加 Delegation A2A section（最小增量，不要重写）
 3. 先验证 CoS→CTO 闭环，再验证 CTO→Builder 闭环
 4. 把结果汇报给我
 

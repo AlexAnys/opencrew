@@ -298,7 +298,7 @@ Create New App → **From manifest** → 粘贴以下内容（修改 `name` 和 
 创建后：
 1. **App-Level Token**：Basic Information → App-Level Tokens → Generate Token（scope: `connections:write`）→ 拿到 `xapp-...`
 2. **Bot Token**：Install to Workspace → 拿到 `xoxb-...`
-3. **Bot User ID**：查看 bot profile（可选，用于 prompt 规则中的 @mention）
+3. **Bot User ID**（必须）：Slack App 页面 → Basic Information 或 bot 的 Slack profile 查看（格式：`U0xxxxxxx`）。@mention 协作协议要求每个 Agent 知道自己和对方的 Bot User ID
 
 ---
 
