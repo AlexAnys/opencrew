@@ -129,6 +129,46 @@ Bot 在 Discord 中显示为"在线"即连接成功。
 
 ---
 
+## Step 5b：配置频道权限隔离（重要！）
+
+> **Warning**：如果不做权限隔离，单个 bot 服务多个 Agent 时可能会在错误的频道发送消息，导致不同 Agent（如 CoS 和 Ops）的对话混在一起。此问题已在 [Issue #34](https://github.com/AlexAnys/opencrew/issues/34) 中报告。以下步骤可以避免此问题。
+
+核心思路：bot 只能在**明确分配给它的频道**中发送消息。在服务器级别拒绝发送消息权限，然后在每个频道中单独允许。
+
+### 单 Bot 配置（默认方案）
+
+1. **创建 bot 角色**（如"OpenCrew Bot"）：
+   - 服务器设置 → 身份组 → 创建身份组
+   - **不要授予管理员权限** -- 管理员权限会绕过所有频道权限覆盖
+   - 授予以下服务器级权限：`查看频道`、`读取消息历史`、`添加反应`、`创建公开帖子`、`创建私密帖子`、`在帖子中发送消息`、`管理帖子`
+   - **不要授予**服务器级别的 `发送消息` 权限
+
+2. **将角色分配给 bot**：
+   - 服务器设置 → 成员 → 找到 bot → 添加"OpenCrew Bot"角色
+
+3. **为每个 Agent 频道添加权限覆盖**（`#hq`、`#cto`、`#build` 等）：
+   - 点击频道名 → 编辑频道 → 权限
+   - 点击"+"添加"OpenCrew Bot"角色
+   - 将 `发送消息` 设为 **允许**（绿色勾号）
+
+4. **验证**：bot 现在应该只能在你明确允许的频道中发送消息。可以测试 bot 是否无法在 Agent 频道之外的随机频道中发言。
+
+### 多 Bot 配置
+
+如果你为每个 Agent 运行独立的 bot，请为每个 bot 创建**单独的角色**：
+
+1. 创建角色："CoS Bot"、"CTO Bot"、"Builder Bot" 等
+2. 每个角色：在服务器级别拒绝 `发送消息`（同上）
+3. 每个角色：仅在指定频道允许 `发送消息`
+   - "CoS Bot" 角色 → 仅在 `#hq` 允许发送消息
+   - "CTO Bot" 角色 → 仅在 `#cto` 允许发送消息
+   - "Builder Bot" 角色 → 仅在 `#build` 允许发送消息
+4. 为每个 bot 分配对应的角色
+
+> **注意**：这就是 Issue #34 中提到的方案——频道不是"公开"让任何 bot 随意发送的，而是手动限制每个 bot 只能在其指定频道发送消息。
+
+---
+
 ## Step 6：获取 Channel ID（两种方法）
 
 ### 方法 A（推荐）：开启开发者模式复制
@@ -167,7 +207,7 @@ openclaw channels resolve --channel discord "#hq" --json
 注意事项：
 - 每个 Bot 需要单独邀请到服务器
 - 超过 75 个服务器的 Bot 需要单独申请 Message Content Intent 审批
-- OpenClaw 多账户支持仍在开发中，参考 [PR #3672](https://github.com/open-claw/open-claw/pull/3672)
+- OpenClaw 多账户支持已在当前版本中可用。参见 [Issue #3306](https://github.com/openclaw/openclaw/issues/3306) 了解社区验证情况
 
 > **提示**：Discord 服务器最多 50 个 Bot，OpenCrew 的 7 个 Agent 远低于此限制。对于大多数用户，单 Bot + 频道路由已经足够。
 

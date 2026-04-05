@@ -8,15 +8,47 @@
 
 ---
 
-## 前置条件
+## 前置条件清单
 
-在开始前，请确认：
+在开始前，逐项确认：
 
-- **OpenClaw 已安装并可用**：运行 `openclaw status` 能看到正常输出
-- **Slack workspace 已创建**：你有管理员权限
-- **基本命令行能力**：能在终端里复制粘贴命令执行（或者让你现有的 OpenClaw 代为执行）
+- [ ] **OpenClaw 已安装并可用**：运行 `openclaw status` 能看到正常输出
+- [ ] **消息平台已就绪**：Slack workspace、Discord 服务器或飞书组织——且你有管理员权限
+- [ ] **基本命令行能力**：能在终端里复制粘贴命令执行（或者让你现有的 OpenClaw 代为执行）
+- [ ] **已在平台上创建 Bot/App**：必须先创建 bot/app，然后再接入 OpenClaw（详见下方平台指南）
 
 > 不确定 OpenClaw 怎么装？参考 [OpenClaw 官方文档](https://docs.openclaw.ai/)
+
+### 正确的部署顺序
+
+按以下顺序操作。最常见的错误是在消息平台上的 bot 还没配好之前就尝试配置 OpenClaw 绑定。
+
+```
+人工操作（你在平台上完成）：
+  1. 在消息平台上创建 bot/app（Discord/Slack/飞书）
+  2. 在平台上配置权限和 intents/scopes
+  3. 邀请 bot 到你的服务器/workspace/群组
+  4. 创建 Agent 频道/群组
+
+Agent 自动化（你的 OpenClaw agent 执行——参见 DEPLOY.md）：
+  5. 把平台接入 OpenClaw（openclaw channels add）
+  6. 部署 OpenCrew 文件（shared 协议 + workspace）
+  7. 写入 OpenClaw 配置（Agent 绑定、Channel ID）
+  8. 重启 gateway（openclaw gateway restart）
+  9. 验证（发测试消息）
+```
+
+> 步骤 5-9 可以通过向你现有的 OpenClaw agent 发送 [DEPLOY.md](../DEPLOY.md) 中的部署提示来全自动完成。
+
+### 平台接入指南
+
+| 平台 | 接入指南 | 预计时间 |
+|------|---------|---------|
+| Slack | [SLACK_SETUP.md](SLACK_SETUP.md) | 约 15 分钟 |
+| Discord | [DISCORD_SETUP.md](DISCORD_SETUP.md) | 约 15 分钟 |
+| 飞书 | [FEISHU_SETUP.md](FEISHU_SETUP.md) | 约 20 分钟 |
+
+> **提示**：先完成对应平台的接入指南（上述步骤 1-4），然后回到本文档继续 Phase 2。
 
 ---
 
@@ -242,6 +274,42 @@ ls -la ~/.openclaw/
 # 修复
 sudo chown -R $USER ~/.openclaw/
 ```
+
+---
+
+## 新手常见错误
+
+以下是新用户最常遇到的问题：
+
+### 1. 部署顺序搞反
+
+**错误**：在消息平台上还没创建 bot 就尝试运行 `openclaw channels add` 或配置绑定。
+
+**解决**：务必先在消息平台上创建并配置好 bot/app。参见上方[正确的部署顺序](#正确的部署顺序)。
+
+### 2. 跳过频道权限隔离（Discord）
+
+**错误**：使用单 bot 但保留默认权限，bot 可以在任何频道发消息。这会导致不同 Agent 的对话混在一起（Issue #34）。
+
+**解决**：按照 Discord 接入指南中的[频道权限隔离](DISCORD_SETUP.md#step-5b配置频道权限隔离重要)步骤操作。
+
+### 3. 忘记重启 gateway
+
+**错误**：修改了配置或绑定但没有重启。配置不会自动生效。
+
+**解决**：修改配置后务必运行 `openclaw gateway restart`，然后用 `openclaw status` 验证。
+
+### 4. Channel ID 填错
+
+**错误**：复制了错误的 Channel ID 或搞混了不同频道的 ID。
+
+**解决**：逐个核对配置中的 Channel ID 与消息平台中的实际 ID。可以用 `openclaw channels resolve` 验证。
+
+### 5. Bot 没被邀请到频道
+
+**错误**：创建了频道但忘了邀请 bot（Slack）或添加 bot 角色（Discord）。
+
+**解决**：Slack 中在每个频道执行 `/invite @bot名`。Discord 中确保 bot 角色有"查看频道"权限。飞书中通过群设置添加机器人。
 
 ---
 

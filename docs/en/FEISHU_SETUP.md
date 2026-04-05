@@ -20,7 +20,33 @@ Feishu does have a native "Topics" (话题) feature, but **OpenClaw's Feishu plu
 - **"Thread = task" is not available** -- all conversations within a group are flat; you cannot isolate different tasks into separate threads
 - Practical impact: when an Agent handles multiple tasks concurrently, conversations will intermingle. For light use (one task at a time) this is fine; for heavy parallel workflows it is a noticeable limitation
 
-> This is a known limitation of the OpenClaw Feishu plugin ([Issue #10242](https://github.com/openclaw/openclaw/issues/10242)), not the Feishu platform itself. Future plugin updates may resolve this.
+> This is a known limitation of the OpenClaw Feishu plugin ([Issue #29791](https://github.com/openclaw/openclaw/issues/29791)), not the Feishu platform itself.
+
+### Update: `groupSessionScope` (OpenClaw >= 2026.3.1)
+
+Starting with OpenClaw 2026.3.1, the built-in Feishu plugin supports `groupSessionScope: "group_topic"`, which enables per-topic session isolation -- equivalent to Slack's thread isolation behavior.
+
+To enable it, add `groupSessionScope` to your existing Feishu channel config (do not overwrite your other settings):
+
+```yaml
+channels:
+  feishu:
+    # ... your existing appId, appSecret, etc. ...
+    groupSessionScope: "group_topic"    # add this line
+```
+
+Or via CLI:
+
+```bash
+openclaw config set channels.feishu.groupSessionScope group_topic
+```
+
+With this setting enabled:
+- Each Feishu topic within a group chat gets its own isolated session
+- Concurrent tasks no longer intermingle
+- The behavior matches the Slack "thread = task" model
+
+> **Note**: `groupSessionScope` requires the **built-in OpenClaw Feishu plugin**. The community plugin ([AlexAnys/feishu-openclaw](https://github.com/AlexAnys/feishu-openclaw)) does not support this parameter -- you must use the built-in plugin that ships with OpenClaw >= 2026.3.1.
 
 ---
 
@@ -261,6 +287,7 @@ agents:
 - Each app needs its own event subscriptions (`im.message.receive_v1`) and permissions (see [Step 2](#step-2-configure-permissions-and-event-subscriptions))
 - In "one group per Agent" mode, add only the corresponding bot to each group to avoid duplicate messages
 - A2A communication is unaffected -- it goes through OpenClaw's internal `sessions_send`, independent of bot count
+- **Known bug**: When using multi-account mode with `SecretRef` (e.g. storing `appSecret` via a Kubernetes Secret or external secret manager), there is a known issue where credentials may not be resolved correctly on gateway restart ([OpenClaw Issue #47436](https://github.com/openclaw/openclaw/issues/47436)). Workaround: use plaintext secrets in the config file (with appropriate file permissions) until this is fixed, or restart the gateway twice after credential changes
 
 ---
 

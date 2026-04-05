@@ -21,11 +21,11 @@
 - `replyToMode: "all"` 可以确保回复进 thread
 - `channels.slack.thread.historyScope = "thread"` + `inheritParent=false` 可以确保 thread 内历史隔离
 
-但它们**无法把“每条新的 root message”自动变成一个新 session**。
+但它们**无法把"每条新的 root message"自动变成一个新 session**。
 
 ### 当前稳定做法（不改源码，推荐）
-- **把“任务”定义为 thread**：每个任务都在一个 thread 里推进
-- 在频道里只发“很短的 root message”当作锚点（标题/任务一句话），立刻在 thread 里继续对话
+- **把"任务"定义为 thread**：每个任务都在一个 thread 里推进
+- 在频道里只发"很短的 root message"当作锚点（标题/任务一句话），立刻在 thread 里继续对话
 - 同一频道并行多个任务：开多个 thread
 
 ### 高级（不推荐新手）：dist-level patch
@@ -39,16 +39,16 @@
 ## P1：A2A 可见性断裂（派单后 Slack thread 没有回复）
 
 ### 现象
-`sessions_send` 触发后，目标 Agent 偶尔不在预期的 Slack thread 内回复，导致用户看到“派了任务但没人做”。
+`sessions_send` 触发后，目标 Agent 偶尔不在预期的 Slack thread 内回复，导致用户看到"派了任务但没人做"。
 
 ### 当前机制：A2A 可见性契约（文档级兜底）
-OpenCrew 采用“两步触发”：
+OpenCrew 采用"两步触发"：
 1) 在目标频道创建 Slack root message（可见锚点）
 2) 用 `sessions_send` 触发目标 agent，在该 thread 的 sessionKey 内执行
 
 并要求发起方在发送后检查 thread 是否出现回复，失败则标记 `failed-delivery` 并上报。
 
-> 这是“契约兜底”，不是根治；根治需要上游在 Slack deliveryContext 方面更强的确定性。
+> 这是"契约兜底"，不是根治；根治需要上游在 Slack deliveryContext 方面更强的确定性。
 
 ---
 
@@ -64,7 +64,29 @@ OpenCrew 采用“两步触发”：
 
 ---
 
-## P2：知识系统“跨 session 语义检索”仍在探索
+## P1：飞书群聊会话隔离（OpenClaw >= 2026.3.1 已解决）
+
+### 现象
+
+飞书群聊中，同一群组内的所有对话是平铺的——没有 thread 级别的会话隔离。当一个 Agent 同时处理多个任务时，对话会混在一起。
+
+### 解决方案
+
+OpenClaw 2026.3.1 在内置飞书插件中引入了 `groupSessionScope: "group_topic"`。启用后，群组内的每个飞书话题（thread）拥有独立的会话隔离，与 Slack 的 thread 隔离行为一致。
+
+```yaml
+channels:
+  feishu:
+    groupSessionScope: "group_topic"
+```
+
+配置详情参见[飞书接入指南：groupSessionScope](FEISHU_SETUP.md#更新groupsessionscopeopenclaw--202631)。
+
+> **注意**：此功能需要使用 OpenClaw 内置飞书插件。社区插件（[AlexAnys/feishu-openclaw](https://github.com/AlexAnys/feishu-openclaw)）不支持 `groupSessionScope`。
+
+---
+
+## P2：知识系统"跨 session 语义检索"仍在探索
 
 当前 v1 依赖 Closeout + KO 提炼；跨 session 的语义检索/索引属于探索方向（欢迎贡献）。
 

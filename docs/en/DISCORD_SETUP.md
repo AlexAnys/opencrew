@@ -129,6 +129,46 @@ Make sure the bot has "View Channel" and "Send Messages" permissions in each cha
 
 ---
 
+## Step 5b: Configure Channel Permission Isolation (Important!)
+
+> **Warning**: Without channel permission isolation, a single bot serving multiple agents may send messages in the wrong channel, causing conversations from different agents (e.g. CoS and Ops) to mix together. This was reported in [Issue #34](https://github.com/AlexAnys/opencrew/issues/34). The steps below prevent this.
+
+The core idea: the bot should only be able to **send messages** in channels that are explicitly assigned to it. At the server level, deny Send Messages; then allow it per-channel.
+
+### Single-Bot Setup (default)
+
+1. **Create a bot role** (e.g. "OpenCrew Bot"):
+   - Server Settings → Roles → Create Role
+   - **Do NOT grant Administrator** -- Administrator bypasses all channel overrides
+   - Grant these server-level permissions: `View Channels`, `Read Message History`, `Add Reactions`, `Create Public Threads`, `Create Private Threads`, `Send Messages in Threads`, `Manage Threads`
+   - **Do NOT grant** `Send Messages` at the server level
+
+2. **Assign the role to the bot**:
+   - Server Settings → Members → find the bot → add the "OpenCrew Bot" role
+
+3. **Add per-channel permission overrides** for each agent channel (`#hq`, `#cto`, `#build`, etc.):
+   - Click the channel name → Edit Channel → Permissions
+   - Click "+" to add the "OpenCrew Bot" role
+   - Set `Send Messages` to **Allow** (green checkmark)
+
+4. **Verify**: The bot should now only be able to send messages in channels where you explicitly allowed it. Test by checking that the bot cannot post in a random channel outside the agent channels.
+
+### Multi-Bot Setup
+
+If you are running multiple bots (one per agent), create a **separate role for each bot**:
+
+1. Create roles: "CoS Bot", "CTO Bot", "Builder Bot", etc.
+2. For each role: deny `Send Messages` at the server level (same as above)
+3. For each role: allow `Send Messages` only in the designated channel
+   - "CoS Bot" role → allow Send Messages only in `#hq`
+   - "CTO Bot" role → allow Send Messages only in `#cto`
+   - "Builder Bot" role → allow Send Messages only in `#build`
+4. Assign each bot its corresponding role
+
+> **Note**: This is the approach referenced in Issue #34 -- the channels are not "public" in the sense that any bot can post anywhere. Instead, you manually restrict each bot's send permission to its designated channel.
+
+---
+
 ## Step 6: Get Channel IDs (two methods)
 
 ### Method A (recommended): Enable Developer Mode and copy
@@ -167,7 +207,7 @@ Create a separate Discord Application for each agent. Each bot gets its own iden
 Things to keep in mind:
 - Each bot must be invited to the server individually
 - Bots in more than 75 servers require a separate Message Content Intent approval
-- OpenClaw multi-account support is still in development -- see [PR #3672](https://github.com/open-claw/open-claw/pull/3672)
+- OpenClaw multi-account support is available in current versions. See [Issue #3306](https://github.com/openclaw/openclaw/issues/3306) for community confirmation
 
 > **Tip**: Discord servers allow up to 50 bots. OpenCrew's 7 agents are well within this limit. For most users, a single bot with channel routing is sufficient.
 

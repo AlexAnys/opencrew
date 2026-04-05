@@ -8,15 +8,47 @@ This is a complete step-by-step guide. If you just want the quick path, head bac
 
 ---
 
-## Prerequisites
+## Prerequisites Checklist
 
-Before you begin, make sure:
+Before you begin, go through this checklist:
 
-- **OpenClaw is installed and working**: Running `openclaw status` shows normal output
-- **A Slack workspace is created**: You have admin permissions
-- **Basic command-line skills**: You can copy-paste and run commands in a terminal (or have your existing OpenClaw agent do it for you)
+- [ ] **OpenClaw is installed and working**: Running `openclaw status` shows normal output
+- [ ] **A messaging platform is ready**: Slack workspace, Discord server, or Feishu organization -- with admin permissions
+- [ ] **Basic command-line skills**: You can copy-paste and run commands in a terminal (or have your existing OpenClaw agent do it for you)
+- [ ] **Bot/App created on your platform**: You must create the bot/app FIRST, before connecting it to OpenClaw (see platform-specific guides below)
 
 > Not sure how to install OpenClaw? See the [OpenClaw official docs](https://docs.openclaw.ai/)
+
+### Correct Deployment Order
+
+Follow these steps in order. The most common mistake is trying to configure OpenClaw bindings before the bot is fully set up on the messaging platform.
+
+```
+Manual (you do these on the platform):
+  1. Create bot/app on your messaging platform (Discord/Slack/Feishu)
+  2. Configure permissions and intents/scopes on the platform
+  3. Invite the bot to your server/workspace/groups
+  4. Create the agent channels/groups
+
+Agent-automated (your OpenClaw agent handles these — see DEPLOY.md):
+  5. Connect the platform to OpenClaw (openclaw channels add)
+  6. Deploy OpenCrew files (shared protocols + workspaces)
+  7. Write OpenClaw config (agent bindings, channel IDs)
+  8. Restart the gateway (openclaw gateway restart)
+  9. Verify (send test messages)
+```
+
+> Steps 5-9 can be fully automated by sending the deployment prompt in [DEPLOY.md](../../DEPLOY.en.md) to your existing OpenClaw agent.
+
+### Platform-Specific Setup Guides
+
+| Platform | Setup Guide | Time Estimate |
+|----------|-------------|---------------|
+| Slack | [SLACK_SETUP.md](SLACK_SETUP.md) | ~15 min |
+| Discord | [DISCORD_SETUP.md](DISCORD_SETUP.md) | ~15 min |
+| Feishu | [FEISHU_SETUP.md](FEISHU_SETUP.md) | ~20 min |
+
+> **Tip**: Complete the platform-specific setup guide FIRST (Steps 1-4 above), then return here for Phase 2 onwards.
 
 ---
 
@@ -242,6 +274,42 @@ ls -la ~/.openclaw/
 # Fix
 sudo chown -R $USER:$USER ~/.openclaw/
 ```
+
+---
+
+## Common Mistakes
+
+These are the most frequently reported issues from new users:
+
+### 1. Wrong deployment order
+
+**Mistake**: Trying to run `openclaw channels add` or configure bindings before creating the bot on the messaging platform.
+
+**Fix**: Always create and configure the bot/app on your messaging platform first. See [Correct Deployment Order](#correct-deployment-order) above.
+
+### 2. Skipping channel permission isolation (Discord)
+
+**Mistake**: Using a single bot with default permissions, allowing it to send messages in any channel. This causes agent conversations to mix (Issue #34).
+
+**Fix**: Follow the [Channel Permission Isolation](DISCORD_SETUP.md#step-5b-configure-channel-permission-isolation-important) steps in the Discord setup guide.
+
+### 3. Forgetting to restart the gateway
+
+**Mistake**: Changing config or bindings but not restarting. Changes do not take effect until restart.
+
+**Fix**: Always run `openclaw gateway restart` after config changes, then verify with `openclaw status`.
+
+### 4. Channel ID mismatch
+
+**Mistake**: Copying the wrong Channel ID or mixing up IDs between channels.
+
+**Fix**: Double-check each Channel ID against your messaging platform. Use `openclaw channels resolve` to verify.
+
+### 5. Bot not invited to channels
+
+**Mistake**: Creating channels but forgetting to invite the bot (Slack) or add the bot role (Discord).
+
+**Fix**: In Slack, run `/invite @bot-name` in each channel. In Discord, ensure the bot role has View Channel permission. In Feishu, add the bot via group settings.
 
 ---
 

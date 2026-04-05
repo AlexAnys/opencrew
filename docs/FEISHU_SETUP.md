@@ -20,7 +20,33 @@ OpenCrew 在 Slack 上的核心模型是"频道=岗位，Thread=任务"——每
 - **"话题=任务"暂不可用** — 同一个群组内的所有对话是平铺的，不能按 thread 隔离不同任务
 - 实际影响：当一个 Agent 同时处理多个任务时，对话会混在一起。对于轻量使用（一次一个任务）影响不大；高频并行任务场景下体验会打折扣
 
-> 这是 OpenClaw 飞书插件的已知限制（[Issue #10242](https://github.com/openclaw/openclaw/issues/10242)），不是飞书平台本身的限制。后续插件更新可能会解决。
+> 这是 OpenClaw 飞书插件的已知限制（[Issue #29791](https://github.com/openclaw/openclaw/issues/29791)），不是飞书平台本身的限制。
+
+### 更新：`groupSessionScope`（OpenClaw >= 2026.3.1）
+
+从 OpenClaw 2026.3.1 开始，内置飞书插件支持 `groupSessionScope: "group_topic"`，可以实现按话题隔离会话——等同于 Slack 的 thread 隔离行为。
+
+启用方式：在你现有的飞书频道配置中添加 `groupSessionScope`（不要覆盖其他设置）：
+
+```yaml
+channels:
+  feishu:
+    # ... 你现有的 appId、appSecret 等配置 ...
+    groupSessionScope: "group_topic"    # 添加这一行
+```
+
+或通过命令行：
+
+```bash
+openclaw config set channels.feishu.groupSessionScope group_topic
+```
+
+启用后：
+- 群组内的每个飞书话题拥有独立的会话隔离
+- 并发任务不再互相干扰
+- 行为与 Slack 的"thread = 任务"模型一致
+
+> **注意**：`groupSessionScope` 需要使用 **OpenClaw 内置飞书插件**。社区插件（[AlexAnys/feishu-openclaw](https://github.com/AlexAnys/feishu-openclaw)）不支持此参数——你必须使用 OpenClaw >= 2026.3.1 自带的内置插件。
 
 ---
 
@@ -261,6 +287,7 @@ agents:
 - 每个应用需独立配置事件订阅（`im.message.receive_v1`）和权限（参考 [Step 2](#step-2配置权限--事件订阅)）
 - "一群一 Agent"模式下，每个群只添加对应的 bot，避免消息重复
 - A2A 通信不受影响 — 走 OpenClaw 内部 `sessions_send`，与 bot 数量无关
+- **已知 Bug**：多账户模式下使用 `SecretRef`（如通过 Kubernetes Secret 或外部密钥管理器存储 `appSecret`）时，网关重启后凭证可能无法正确解析（[OpenClaw Issue #47436](https://github.com/openclaw/openclaw/issues/47436)）。临时方案：在配置文件中使用明文密钥（注意设置文件权限），或在修改凭证后重启两次网关
 
 ---
 

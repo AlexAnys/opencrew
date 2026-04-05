@@ -71,6 +71,28 @@ Long-running threads with large tool outputs can cause context overflow.
 
 ---
 
+## P1: Feishu group chat session isolation (resolved in OpenClaw >= 2026.3.1)
+
+### Symptoms
+
+In Feishu group chats, all conversations within a single group are flat -- there is no thread-level session isolation. When an Agent handles multiple tasks concurrently, conversations intermingle.
+
+### Resolution
+
+OpenClaw 2026.3.1 introduced `groupSessionScope: "group_topic"` in the built-in Feishu plugin. With this setting enabled, each Feishu topic (thread) within a group gets its own isolated session, matching the Slack thread isolation behavior.
+
+```yaml
+channels:
+  feishu:
+    groupSessionScope: "group_topic"
+```
+
+See [Feishu Setup: groupSessionScope](../en/FEISHU_SETUP.md#update-groupsessionscope-openclaw--202631) for configuration details.
+
+> **Note**: This requires the built-in OpenClaw Feishu plugin. The community plugin ([AlexAnys/feishu-openclaw](https://github.com/AlexAnys/feishu-openclaw)) does not support `groupSessionScope`.
+
+---
+
 ## P2: Cross-session semantic retrieval in the knowledge system is still exploratory
 
 The current v1 relies on Closeout + KO distillation. Cross-session semantic retrieval/indexing is an exploratory direction (contributions welcome).
