@@ -1,6 +1,10 @@
 [中文](../ARCHITECTURE.md) | **English**
 
-# Architecture — Detailed Design
+> [README](../../README.en.md) > [Getting Started](GETTING_STARTED.md) > [Core Concepts](CONCEPTS.md) > **Architecture** > [Customization](CUSTOMIZATION.md)
+
+# Architecture
+
+> This document focuses on "why it's designed this way." For specific rules and parameters of each mechanism, see [Core Concepts](CONCEPTS.md).
 
 ## Design Goals
 
@@ -65,50 +69,44 @@ Slack's product features are a natural fit for multi-Agent collaboration:
 | Channels | = Agent roles, one App manages all Agents |
 | Threads | = Independent sessions, natural context isolation |
 | Unreads / Later | = Decision to-do list, clear at a glance |
-| A2A cross-channel output | All collaboration visible, fully auditable |
+| A2A cross-channel collaboration | Orchestrator enters other channels to discuss, visible and auditable |
 | Drafts / Sent tracking | Thread trace for complete chain |
 | Mobile app | Approve anytime, decide anywhere — fragments of time = management time |
 | Add/remove channels | Agents and channels are plug-and-play, flexible scaling |
 
-## A2A Two-Step Trigger Mechanism
+## A2A Native Collaboration
 
-### Why Two Steps?
+### Core Idea
 
-In OpenClaw's Slack integration, all Agents share one bot identity. Messages sent by the bot are ignored by itself by default (to prevent self-loops). So when Agent A sends a message in Slack, Agent B won't automatically process it.
+All Agents share one Slack bot identity -> the bot ignores its own messages -> Agents cannot directly talk to each other.
 
-The solution is a **two-step trigger**:
-
-```
-Step 1: Agent A creates a root message in Agent B's channel (visible anchor in Slack)
-Step 2: Agent A calls sessions_send() to trigger Agent B (the actual execution signal)
-```
-
-### Session Key Structure
+**Solution: Selective Independence.** Give the Orchestrator its own independent Slack App, invite it into other Agents' channels, and let it @mention them directly.
 
 ```
-agent:<target_agent_id>:slack:channel:<channelId>:thread:<root_ts>
+Orchestrator (independent App) enters #cto -> @CTO starts discussion
+CTO (default Bot) replies in thread -> @Orchestrator
+Orchestrator evaluates -> continue @CTO / move to #build @Builder / terminate
 ```
 
-This key ensures Agent B executes within that thread's context, achieving thread-level session isolation.
+### Loop Prevention: Two-Layer Defense
 
-### Anti-Loop Triple Protection
+1. **Config layer**: `requireMention: true` (channel root messages require explicit @)
+2. **Prompt layer**: @mention protocol (check for explicit `<@BotID>` in thread, reply NO_REPLY if absent)
 
-1. **Permission Matrix**: Only CoS/CTO/Ops can initiate sessions_send (config-layer hard constraint)
-2. **maxPingPongTurns = 4**: Limits A2A round-trips (config-layer hard constraint)
-3. **Subagent deny sessions**: Sub-Agents cannot spawn sessions (config-layer hard constraint)
+> Full protocol at `shared/A2A_PROTOCOL.md`; setup guide at `docs/A2A_SETUP_GUIDE.md`.
 
 ## Information Flow
 
 ### Task Dispatch Flow (Multiple Paths Coexist)
 
 ```
-Path 1 (Direct):    User -> #cto (CTO) -> Breakdown -> A2A -> #build (Builder)
-Path 2 (Via CoS):   User -> #hq (CoS) -> Evaluate/Assign -> A2A -> #cto (CTO) -> ...
-Path 3 (Domain):    User -> #invest (CIO) -> Handle independently or spawn Research
-Path 4 (CoS Drive): CoS proactively drives -> A2A -> CTO/CIO (when user authorizes or is away)
+Path 1 (Direct):       User -> #cto (CTO) -> Breakdown -> @Builder discussion / spawn execution
+Path 2 (Orchestrator): User -> @Orchestrator -> enters #cto to discuss with CTO -> enters #build to confirm with Builder
+Path 3 (Domain):       User -> #invest (CIO) -> Handle independently or spawn Research
+Path 4 (Proxy Drive):  Orchestrator proactively drives -> @CTO/@CIO (when user authorizes or is away)
 ```
 
-You don't have to go through CoS — talk to whoever you want by jumping into their channel.
+You don't have to go through CoS -- talk to whoever you want by jumping into their channel.
 
 ### Result Reporting Flow
 
@@ -128,52 +126,20 @@ Any Agent's closeout (signal >= 2) -> #know -> KO extracts -> knowledge/{princip
 S-class closeout / Self-Update -> #ops -> Ops five-dimension audit -> Approved / Needs-revision / Rejected
 ```
 
-## Workspace File Reference
+## Workspace and Shared Protocols
 
-Each Agent's workspace contains these files:
+> For the full file list and field descriptions, see [Core Concepts SS7-SS9](CONCEPTS.md#7-workspace-file-structure)
 
-| File | Purpose | Update Frequency |
-|------|---------|-----------------|
-| IDENTITY.md | Name, emoji, one-liner positioning | Rarely |
-| SOUL.md | Role directives, core principles, autonomy boundaries (**highest priority, must-read on Agent startup**) | Low |
-| AGENTS.md | Workflow, task processing logic, spawn rules | Medium |
-| USER.md | User profile: preferences, constraints, communication style | Low |
-| TOOLS.md | Tools and environment configuration | Low |
-| MEMORY.md | Long-term memory: stable preferences, principles, lessons | Medium |
-| TASKS.md | Current task board | High |
-| HEARTBEAT.md | Periodic check checklist | As needed |
-
-**Key design**: SOUL.md is read first, ensuring role positioning has the highest priority in the Agent's context.
-
-## Shared Protocols Reference
-
-Rules and templates shared by all Agents live in `~/.openclaw/shared/`:
-
-| File | Purpose |
-|------|---------|
-| SYSTEM_RULES.md | Global system rules (autonomy levels, task classification, artifact requirements) |
-| A2A_PROTOCOL.md | Agent-to-Agent collaboration protocol (two-step trigger, permission matrix) |
-| OPS_REVIEW_PROTOCOL.md | Governance audit rules (review dimensions, cadence) |
-| KNOWLEDGE_PIPELINE.md | Knowledge distillation pipeline (three-layer structure, KO workflow) |
-| TASK_PROTOCOL.md | Task classification and processing protocol |
-| CLOSEOUT_TEMPLATE.md | Task closeout template |
-| CHECKPOINT_TEMPLATE.md | Checkpoint template |
-| SUBAGENT_PACKET_TEMPLATE.md | Sub-Agent task packet template |
-| SELF_UPDATE_TEMPLATE.md | Self-update record template |
+**Key design decisions**:
+- **SOUL.md has the highest priority**: Read first on Agent startup, ensuring "who you are" takes precedence over "how you work"
+- **SOUL and AGENTS are separate**: Prevents operational procedures from diluting role positioning
+- **shared/ is linked via symlink**: Avoids multiple copies leading to protocol drift
 
 ## Config-Layer Hard Constraints
 
-The following behaviors are enforced via `openclaw.json` at the config layer — they don't rely on Agents "being well-behaved":
+> For the full config reference, see [Core Concepts SS9](CONCEPTS.md#9-configuration-layer-hard-constraints)
 
-| Constraint | Config Key | Effect |
-|-----------|-----------|--------|
-| A2A initiation permission | `tools.agentToAgent.allow` | Only CoS/Ops/CTO can initiate sessions_send |
-| A2A loop limit | `session.agentToAgent.maxPingPongTurns` | Maximum 4 round-trips |
-| Subagent permission | `tools.subagents.tools.deny` | Sub-Agents cannot operate sessions |
-| Channel isolation | `channels.slack.groupPolicy = "allowlist"` | Only responds to allowed channels |
-| Ops noise control | `requireMention = true` (optional) | Recommended for #ops/#know @mention gate (open-source default is off, turn on once running) |
-| Thread isolation | `thread.historyScope = "thread"` | Each thread is an independent session |
-| Reply mode | `replyToMode = "all"` | All replies automatically go into the thread |
+**Core principle**: If a constraint can go into config, don't just put it in documentation. Document-layer rules can be "forgotten" by Agents. Config-layer rules cannot be bypassed.
 
 ## Design Trade-offs
 
@@ -194,3 +160,7 @@ The CoS's value is **deep intent alignment** and **driving tasks when you're awa
 
 ### Why Are SOUL.md and AGENTS.md Separate?
 SOUL is the role's core positioning and principles ("who you are, what your boundaries are"). AGENTS is the operational workflow ("what to do when a task arrives"). Separating them prevents workflow details from diluting the priority of role positioning.
+
+---
+
+> Next steps: [Customize Your Agents](CUSTOMIZATION.md) | [Known Issues](KNOWN_ISSUES.md) | [Core Concepts](CONCEPTS.md)

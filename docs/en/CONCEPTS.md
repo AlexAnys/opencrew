@@ -138,7 +138,7 @@ For detailed setup guide, see [Discussion Mode Setup Guide](A2A_SETUP_GUIDE.md).
 After every A/P/S task is completed, the executor must write a 10-15 line Closeout:
 
 ```
-CLOSEOUT A | Implement rate limiting | TID:20260210-1400-ratelimit
+CLOSEOUT A | Implement rate limiting | 20260210
 ---
 ## What was done
 - Added Token Bucket rate limiting to API gateway
@@ -165,11 +165,11 @@ CLOSEOUT A | Implement rate limiting | TID:20260210-1400-ratelimit
 For P-type tasks that span multiple days, write one at the end of each day or at each key milestone:
 
 ```
-CHECKPOINT P | Database migration | TID:20260210-0900-dbmigrate | Progress: 40%
+CHECKPOINT P | Database migration | 20260210 | Progress: 40%
 ---
-Completed: schema design, test environment setup
-In progress: data migration script (50%)
-Blocked: awaiting DBA approval (expected 2/12)
+Completed: ✅ schema design ✅ test environment setup
+In progress: 🔄 data migration script (50%)
+Blocked: ⚠️ awaiting DBA approval (expected 2/12)
 ```
 
 ---

@@ -1,33 +1,258 @@
 [中文](../A2A_SETUP_GUIDE.md) | **English**
 
-# Discussion Mode Setup Guide — Independent Bot + Collaboration Mechanism
+# Discussion Mode Setup Guide
 
-> Based on 2026-03-30 ~ 2026-04-02 end-to-end testing.
+> Based on 2026-03-30 ~ 2026-04-02 end-to-end testing, covering configuration flow + collaboration mechanism + known pitfalls.
 > PR: https://github.com/AlexAnys/opencrew/pull/38
+
+This guide has three parts:
+- **Part 1**: Agent Configuration Guide (generic, parameterized -- for any OpenClaw agent to execute)
+- **Part 2**: Human Operations (create Slack App, one-time)
+- **Part 3**: Collaboration Mechanism After Introduction
 
 ---
 
-## Part 1: How to Introduce an Independent Bot
+## Part 1: Agent Configuration Guide (To Agent)
 
-### Background
+> The following is the complete procedure an OpenClaw agent should follow when helping a user configure Discussion Mode.
+> All identifiers are parameterized -- fill them in dynamically based on the user's actual config.
 
-OpenCrew defaults to all Agents sharing one Slack App (one bot user). This means Bot A's messages to Bot B's channel are ignored by the self-reply filter (same bot user).
+### Prerequisites (User Must Complete in Advance)
 
-**Discussion Mode** requires "selective independence": give a small number of high-value Agents (e.g., Orchestrator) their own Slack App, then invite them into other Agents' channels for direct conversation.
+The user must provide:
+- Bot Token (`xoxb-...`) and App Token (`xapp-...`) for the new Slack App
+- The agent ID the new bot should be associated with (e.g., `orchestrator`, `cos`, `ali`, etc.)
+- The target channel(s) the new bot should join
+- Confirmation that the user has run `/invite @NewBot` in the target channel(s) in Slack
 
-### Step 1: Create an Independent Slack App
+### Step 0: Read Current Config (Must Do First)
 
-Go to [api.slack.com/apps](https://api.slack.com/apps) → Create New App → **From manifest**:
+Before modifying any config, read `openclaw.json` and record:
+
+```
+Information to confirm:
+1. Do channels.slack.botToken and appToken exist? (main bot credentials)
+2. Does channels.slack.accounts already exist?
+   - If yes: what keys are present? Is there already an accounts.default?
+   - If no: currently in single-account mode
+3. What channels exist in channels.slack.channels and their current config?
+4. What existing bindings are there?
+```
+
+### Step 1: Back Up
+
+```bash
+cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak-before-<description>-<YYYYMMDD>
+```
+
+### Step 2: accounts.default Guard (Hard Rule)
+
+> **This guard cannot be skipped. Violation will disconnect all existing Agents.**
+>
+> OpenClaw's `listAccountIds()` logic: once an `accounts` object exists with any key,
+> **only explicitly declared accounts are started** -- the implicit default provider is no longer created.
+>
+> Lesson learned: omitting accounts.default caused ~13 hours of total Agent disconnection.
+
+**Decision logic**:
+
+```
+IF channels.slack.accounts does not exist (single-account mode):
+    -> When creating the accounts object, you MUST include accounts.default
+    -> accounts.default.botToken = current channels.slack.botToken
+    -> accounts.default.appToken = current channels.slack.appToken
+
+IF channels.slack.accounts already exists:
+    IF accounts.default already exists:
+        -> Safe, continue
+    ELSE:
+        -> STOP! Add accounts.default before proceeding
+```
+
+### Step 3: Add New Account
+
+Add the new account under `channels.slack.accounts`:
+
+```jsonc
+"accounts": {
+    "default": { ... },  // <- Step 2 ensures this exists
+    "<ACCOUNT_ID>": {     // <- user-specified account identifier (e.g. "orchestrator")
+        "botToken": "<user-provided xoxb-...>",
+        "appToken": "<user-provided xapp-...>",
+        "channels": {
+            // For each target channel:
+            "<CHANNEL_ID_1>": {
+                "allow": true,
+                "requireMention": true,  // new bot only responds to explicit @mention
+                "allowBots": true        // new bot can see other bots' messages
+            },
+            "<CHANNEL_ID_2>": {
+                "allow": true,
+                "requireMention": true,
+                "allowBots": true
+            }
+            // ... all user-specified channels
+        }
+    }
+}
+```
+
+### Step 4: Update Target Channel Global Config
+
+For each channel the new bot will join, add `allowBots: true` in `channels.slack.channels`:
+
+```jsonc
+"channels": {
+    "<CHANNEL_ID_1>": {
+        "allow": true,       // keep existing value
+        // ... keep all other existing config
+        "allowBots": true    // <- new: lets the channel's existing agents see the new bot's messages
+    }
+}
+```
+
+**Note**: Do not overwrite the channel's other existing config (`requireMention`, `users`, `systemPrompt`, etc.). Only incrementally add `allowBots`.
+
+### Step 5: Add Routing Binding
+
+Add a binding for each target channel of the new account.
+
+**Binding type selection**:
+
+```
+If the new bot routes to the same agent across all channels:
+    -> Use a single account-level binding (no peer)
+    { "agentId": "<AGENT_ID>", "match": { "channel": "slack", "accountId": "<ACCOUNT_ID>" } }
+
+If the new bot routes to different agents in different channels:
+    -> One accountId+peer binding per channel
+    { "agentId": "<AGENT_ID>", "match": { "channel": "slack", "accountId": "<ACCOUNT_ID>", "peer": { "kind": "channel", "id": "<CHANNEL_ID>" } } }
+```
+
+**Binding order**: Insert new bindings **before existing same-channel bindings** in the `bindings` array (more specific matches take priority).
+
+### Step 6: Write Config and Wait for Hot Reload
+
+```bash
+# Write openclaw.json (ensure valid JSON)
+# Do NOT SIGTERM -- wait for hot reload to take effect automatically
+```
+
+### Step 7: Verify
+
+Check gateway logs (`~/.openclaw/logs/gateway.log`) and confirm **all** of the following:
+
+```
+[slack] [default] starting provider        — main bot still running
+[slack] [<ACCOUNT_ID>] starting provider   — new bot started
+channels resolved: ...(no missing_scope)   — all channel permissions OK
+socket mode connected (appears N times, N = number of accounts) — connection successful
+```
+
+**If verification fails**:
+
+```
+If only the default provider starts and the new account does not:
+    -> Check if the new account's tokens are correct
+    -> Check if the new Slack App has Socket Mode enabled
+
+If the default provider does not start:
+    -> accounts.default is missing! Roll back immediately:
+    cp ~/.openclaw/openclaw.json.bak-before-... ~/.openclaw/openclaw.json
+
+If missing_scope appears:
+    -> User needs to add the corresponding scope in the Slack App and Reinstall
+```
+
+### Config Template (Full Reference)
+
+```jsonc
+// openclaw.json -- Discussion Mode incremental config
+{
+    "channels": {
+        "slack": {
+            // Top-level tokens retained (as fallback)
+            "botToken": "xoxb-main-...",
+            "appToken": "xapp-main-...",
+
+            "accounts": {
+                // Must exist
+                "default": {
+                    "botToken": "xoxb-main-...",
+                    "appToken": "xapp-main-..."
+                },
+                // New account
+                "<ACCOUNT_ID>": {
+                    "botToken": "xoxb-new-...",
+                    "appToken": "xapp-new-...",
+                    "channels": {
+                        "<CHANNEL_ID>": {
+                            "allow": true,
+                            "requireMention": true,
+                            "allowBots": true
+                        }
+                    }
+                }
+            },
+
+            "channels": {
+                "<CHANNEL_ID>": {
+                    "allow": true,
+                    "allowBots": true
+                }
+            }
+        }
+    },
+
+    "bindings": [
+        // New account binding (place first)
+        {
+            "agentId": "<AGENT_ID>",
+            "match": {
+                "channel": "slack",
+                "accountId": "<ACCOUNT_ID>"
+            }
+        },
+        // Existing bindings (unchanged)
+        // ...
+    ]
+}
+```
+
+### Rollback
+
+```bash
+# Method 1: Restore backup (recommended)
+cp ~/.openclaw/openclaw.json.bak-before-... ~/.openclaw/openclaw.json
+# Wait for hot reload, or:
+launchctl kill SIGTERM gui/501/ai.openclaw.gateway
+
+# Method 2: Manual rollback
+# Remove accounts.<ACCOUNT_ID>
+# If only default remains under accounts, you can delete the entire accounts object to restore single-account mode
+# Remove corresponding bindings
+# Remove allowBots from channels (if it wasn't there before)
+```
+
+---
+
+## Part 2: Human Operations (Create Slack App)
+
+The user needs to create an independent Slack App at [api.slack.com/apps](https://api.slack.com/apps).
+
+### Recommended Manifest
+
+Create New App -> **From manifest** -> paste the following (modify `name` and `description`):
 
 ```json
 {
     "display_information": {
-        "name": "Your-Bot-Name",
+        "name": "<Your Bot Name>",
         "description": "OpenClaw Discussion Mode agent"
     },
     "features": {
         "bot_user": {
-            "display_name": "Your-Bot-Name",
+            "display_name": "<Your Bot Name>",
             "always_online": true
         },
         "app_home": {
@@ -39,23 +264,14 @@ Go to [api.slack.com/apps](https://api.slack.com/apps) → Create New App → **
         "scopes": {
             "bot": [
                 "chat:write",
-                "im:write",
                 "channels:history",
+                "channels:read",
                 "groups:history",
                 "groups:read",
-                "im:history",
-                "im:read",
-                "mpim:history",
-                "mpim:read",
-                "channels:read",
                 "users:read",
                 "app_mentions:read",
-                "assistant:write",
                 "reactions:read",
                 "reactions:write",
-                "pins:read",
-                "pins:write",
-                "emoji:read",
                 "files:read",
                 "files:write"
             ]
@@ -68,14 +284,7 @@ Go to [api.slack.com/apps](https://api.slack.com/apps) → Create New App → **
                 "message.channels",
                 "message.groups",
                 "message.im",
-                "message.mpim",
-                "reaction_added",
-                "reaction_removed",
-                "member_joined_channel",
-                "member_left_channel",
-                "channel_rename",
-                "pin_added",
-                "pin_removed"
+                "message.mpim"
             ]
         },
         "socket_mode_enabled": true,
@@ -86,227 +295,97 @@ Go to [api.slack.com/apps](https://api.slack.com/apps) → Create New App → **
 }
 ```
 
+> **Minimal scope note**: The scopes above are the minimum required for Discussion Mode. If you need DM, pins, or other additional features, refer to `docs/SLACK_SETUP.md` for the full list.
+
 After creation:
-1. Basic Information → App-Level Tokens → Generate Token (scope: `connections:write`) → get `xapp-...`
-2. Install to Workspace → get `xoxb-...`
-3. Record the Bot User ID (Settings → Basic Info, or check the bot's profile in Slack)
-
-### Step 2: Configure OpenClaw Multi-Account
-
-> **Hard requirement: You MUST also declare `accounts.default`**
->
-> `account-helpers.ts:listAccountIds()` logic: once an `accounts` object exists with any key, OpenClaw **only starts explicitly declared accounts** — it no longer implicitly creates a default.
->
-> If you only add `accounts.new-bot` without `accounts.default`, the main bot's provider won't start, and all existing Agent Slack connections will go down.
->
-> This is by design, not a bug.
-
-**Correct config** (incremental changes to `openclaw.json`):
-
-```jsonc
-{
-  "channels": {
-    "slack": {
-      // Keep top-level tokens as fallback
-      "botToken": "xoxb-main-...",
-      "appToken": "xapp-main-...",
-
-      // ★ Critical: explicitly declare accounts.default
-      "accounts": {
-        "default": {
-          "botToken": "xoxb-main-...",   // same as top-level
-          "appToken": "xapp-main-..."    // same as top-level
-        },
-        "new-bot": {
-          "botToken": "xoxb-new-...",
-          "appToken": "xapp-new-...",
-          "channels": {
-            "<TARGET_CHANNEL_ID>": {
-              "allow": true,
-              "requireMention": true,    // only respond to explicit @mentions
-              "allowBots": true          // can see other bots' messages
-            }
-          }
-        }
-      },
-
-      // Enable allowBots on target channel (so existing Agents see the new bot's messages)
-      "channels": {
-        "<TARGET_CHANNEL_ID>": {
-          "allow": true,
-          "requireMention": true,        // recommended: change to true (see Part 2)
-          "allowBots": true
-        }
-      }
-    }
-  },
-
-  // New bot's routing binding
-  "bindings": [
-    // ★ Place before existing peer binding for the target channel (more specific match first)
-    {
-      "agentId": "main",
-      "match": {
-        "channel": "slack",
-        "accountId": "new-bot",
-        "peer": { "kind": "channel", "id": "<TARGET_CHANNEL_ID>" }
-      }
-    },
-    // Existing bindings unchanged
-    {
-      "agentId": "ops",
-      "match": {
-        "channel": "slack",
-        "peer": { "kind": "channel", "id": "<TARGET_CHANNEL_ID>" }
-      }
-    }
-  ]
-}
-```
-
-### Step 3: Invite Bot and Verify
-
-1. In the target channel: `/invite @Your-Bot-Name`
-2. After writing config, **wait for hot-reload** (don't SIGTERM immediately — hot-reload auto-detects changes)
-3. Check gateway logs for both providers starting:
-
-```
-[slack] [default] starting provider     ✅
-[slack] [new-bot] starting provider     ✅
-channels resolved: ...(no missing_scope)  ✅
-socket mode connected                    ✅ (appears twice)
-```
-
-### Rollback
-
-```bash
-cp ~/.openclaw/openclaw.json.bak-before-xxx ~/.openclaw/openclaw.json
-# Wait for hot-reload, or:
-launchctl kill SIGTERM gui/501/ai.openclaw.gateway
-```
-
-### Known Pitfalls
-
-| Pitfall | Consequence | Prevention |
-|---------|-------------|------------|
-| Only add `accounts.new-bot` without `accounts.default` | Main bot disconnects, all Agents lose Slack | Must declare default simultaneously |
-| SIGTERM immediately after config write | Hot-reload's in-memory fix gets killed | Wait for hot-reload to complete before verifying |
-| New Slack App missing scopes | `channels resolved` reports `missing_scope` | Use the complete manifest above |
-| Binding order wrong | New bot's messages route to wrong agent | accountId+peer binding before peer-only binding |
+1. **App-Level Token**: Basic Information -> App-Level Tokens -> Generate Token (scope: `connections:write`) -> get `xapp-...`
+2. **Bot Token**: Install to Workspace -> get `xoxb-...`
+3. **Bot User ID** (required): Check the Slack App page -> Basic Information, or the bot's Slack profile (format: `U0xxxxxxx`). The @mention collaboration protocol requires each Agent to know its own and its counterpart's Bot User ID.
 
 ---
 
-## Part 2: Collaboration Mechanism After Introduction
+## Part 3: Collaboration Mechanism After Introduction
 
 ### Core Challenge
 
 Two bots in the same Slack thread encounter three problems:
 1. **Double response**: A human posts one message, both bots reply
-2. **Loops**: Bot A replies → Bot B gets triggered and replies → Bot A triggered again → ∞
+2. **Loops**: Bot A replies -> Bot B gets triggered and replies -> Bot A triggered again -> infinity
 3. **No routing**: No mechanism to determine "who should reply, who should stay silent"
 
-### Why Config Alone Isn't Enough (Source Code Verified)
+### Why Config Alone Is Not Enough
 
-| Config Option | Expected | Actual |
+| Config Option | Expected | Actual (source code verified) |
 |---|---|---|
-| `requireMention: true` | Only respond to explicit @mentions in thread | ❌ Once a bot has replied in a thread, `implicitMention` is permanently true, bypassing requireMention |
-| `allowBots: "mentions"` | Only process bot messages that explicitly @mention this bot | ❌ Slack provider only does truthy/falsy check; `"mentions"` equals `true` (only Discord supports this properly) |
-
-**Source code evidence** (`resolveMentionGating`):
-
-```js
-implicitMention = !isDirectMessage && botUserId && message.thread_ts &&
-    (message.parent_user_id === botUserId || hasSlackThreadParticipation(...))
-// → once bot has participated in thread, implicitMention is permanently true
-// → requireMention: true is permanently bypassed
-```
+| `requireMention: true` | Only respond to explicit @mentions in thread | Once a bot has participated in a thread, `implicitMention` is permanently true, bypassing requireMention |
+| `allowBots: "mentions"` | Only process bot messages that explicitly @mention this bot | Slack provider only does truthy/falsy check; `"mentions"` equals `true` (only Discord supports this properly) |
 
 ### Solution: Two-Layer Defense
 
-#### Layer 1: Config — `requireMention: true` (Channel-level, hard constraint)
+| Layer | Mechanism | Scope | Type |
+|-------|-----------|-------|------|
+| Config | `requireMention: true` | Channel root messages (not threads) | Hard constraint |
+| Prompt | Explicit @mention protocol | All messages within threads | Soft constraint (instruction following) |
 
-```jsonc
-"<CHANNEL_ID>": {
-  "allow": true,
-  "requireMention": true,   // effective for channel root messages
-  "allowBots": true
-}
-```
+### Explicit @mention Protocol
 
-**Effect**: Channel root messages require explicit @ to trigger → only the @mentioned bot enters the thread.
-**Limitation**: Ineffective inside threads (implicitMention bypasses it).
-
-#### Layer 2: Prompt Rules — Explicit @mention Protocol (Thread-level, soft constraint)
-
-Add to every Agent participating in Discussion Mode:
+Each Agent participating in Discussion Mode should have the following in its workspace files:
 
 ```markdown
 ## Multi-Agent Thread Collaboration Rules
 
 When in a Slack thread where other bots are also present:
 
-1. **Explicit @mention check**: Check the raw message text for `<@YOUR_BOT_ID>`.
-   If NOT present → respond with ONLY `NO_REPLY` — no explanation, no reasoning.
+1. **On receiving a message**: Check the message text for `<@YourBotID>`.
+   If NOT present -> respond with ONLY `NO_REPLY`.
 
-2. **Always @mention your target**: When sending a message to another bot,
-   include `<@targetBotID>`. No @mention = conversation end signal.
+2. **On sending a message**: `<@TargetBotID>` explicitly mention the target.
+   No @mention = conversation end signal.
 
-3. **Role discipline**:
-   - Coordinator (initiator): choose @Worker / @Human / nobody (end)
-   - Worker (executor): every reply must @mention the Coordinator
+3. **Roles**:
+   - Orchestrator: choose @Worker / @Human / nobody (end)
+   - Worker: every reply must @mention the Orchestrator
 
-4. **Termination**: After "done/conclusion", stop unless re-@mentioned.
+4. **Termination**: After saying "done", stop unless re-@mentioned.
 
-5. **Round limit**: Max 8 rounds per thread. After that, pause and summarize to human.
+5. **Round limit**: Max N rounds per thread (recommended 5-8). After that, pause and summarize to the human.
 ```
 
-### Collaboration Flow (Integrating Anthropic Harness Design)
-
-Drawing from the **dual-role architecture** of Anthropic's Harness Design:
+### Collaboration Flow
 
 ```
-User → @Orchestrator: "Investigate XXX"
+Human -> @Orchestrator: "Discuss X"
 
-Orchestrator outputs DISCUSSION SPEC (Phase 0):
-  → 📁 discussions/<topic>/spec.md (goals + acceptance criteria + termination conditions)
-  → Thread message: "Expanded spec, N acceptance criteria. @Worker please start..."
+Phase 0 (expand spec):
+  Orchestrator -> Thread: DISCUSSION SPEC (goals + acceptance criteria + termination conditions)
+  Orchestrator -> @Worker: first question
 
-Round 1:
-  Orchestrator → @Worker: specific question
-  Worker → @Orchestrator: summary + 📁 round-1.md (detailed analysis)
-  Thread messages are summaries only
-
-Round 2:
-  Orchestrator evaluates → 📁 review-1.md → @Worker feedback
-  ...
+Round 1/M:
+  Worker -> @Orchestrator: reply (summary in thread, detailed work in files)
+  Orchestrator evaluates -> continue / terminate
 
 Termination (one of three):
-  ✅ All acceptance criteria met → DISCUSSION_CLOSE
-  ⚠️ Max rounds reached → ask human to intervene
-  🔄 No progress for 2 consecutive rounds → ask human to intervene
+  Criteria met -> DISCUSSION_CLOSE
+  Max rounds reached -> ask human to intervene
+  No progress for 2 consecutive rounds -> ask human to intervene
 ```
 
-**Key principles**:
-1. **Files are the primary communication channel** — Thread holds summaries and @mention routing; detailed work goes in files
-2. **Spec before discussion** — Orchestrator's first message must define acceptance criteria and termination conditions
-3. **Self-review fails, must separate** — Orchestrator doesn't generate solutions, only coordinates and evaluates
-4. **Formal A2A tasks use `sessions_send`** — Discussion action items execute through Delegation with hard `maxPingPongTurns` (0-5)
+### Termination Protocol
 
-### Termination Mechanisms
-
-| Layer | Mechanism | Type |
-|-------|-----------|------|
-| Prompt | @mention protocol + Round N/M counting + DISCUSSION_CLOSE | Soft constraint (instruction following) |
-| Config | `requireMention: true` (channel root messages) | Hard constraint (system-level) |
-| Config | `loopDetection.pingPong: true` | Hard constraint (tool-call level) |
-| A2A | `maxPingPongTurns` (sessions_send) | Hard constraint (system-level) |
+```
+DISCUSSION_CLOSE
+Topic: <topic>
+Consensus: <consensus / "No consensus reached, reason: ...">
+Actions: <follow-up tasks>
+Rounds Used: N/M
+```
 
 ### Known Limitations
 
-1. **Input tokens still consumed** — Messages are delivered to all bots; prompt rules only make the agent reply NO_REPLY, but input token cost is unavoidable
-2. **Prompts are soft constraints** — LLMs may occasionally violate rules (especially in complex contexts)
-3. **`allowBots: "mentions"` is Discord-only** — Slack needs OpenClaw code changes to support this
-4. **`requireMention: true` bypassed in threads** — `implicitMention` (thread participation) permanently bypasses it; OpenClaw would need a `thread.requireExplicitMention` option for system-level enforcement
+1. **Input tokens still consumed** -- messages are delivered to all bots; NO_REPLY does not prevent input token consumption
+2. **Prompts are soft constraints** -- LLMs may occasionally violate rules
+3. **`allowBots: "mentions"` is Discord-only** -- Slack cannot filter bot messages at the config layer
+4. **`requireMention: true` is bypassed in threads** -- OpenClaw would need a `thread.requireExplicitMention` option for system-level enforcement
 
 ---
 
@@ -316,11 +395,5 @@ Termination (one of three):
 |------------|-------|---------|--------|
 | Delegation (sessions_send) | ✅ | ✅ | ✅ |
 | Discussion (cross-bot dialogue) | ✅ Verified | ❌ (OpenClaw bug) | ❌ (Platform limitation) |
-| `allowBots: "mentions"` | ❌ (Not supported) | ✅ | N/A |
-| `requireMention` in thread | ❌ (implicitMention bypass) | ❌ (Same issue) | N/A |
+| `allowBots: "mentions"` | ❌ | ✅ | N/A |
 | Multi-Account | ✅ | ✅ | ✅ |
-| Hard round control | sessions_send only | sessions_send only | sessions_send only |
-
----
-
-> 📖 Related → [A2A Protocol v2](../../shared/A2A_PROTOCOL.md) · [Core Concepts](CONCEPTS.md) · [Agent Onboarding](AGENT_ONBOARDING.md)

@@ -45,7 +45,7 @@ We've resolved the biggest architectural limitation since OpenCrew's inception: 
 
 > **Model compatibility**: Collaboration discipline (@mention checking, round counting, NO_REPLY) relies on prompt rules, not system enforcement. Tested stable with Claude Opus 4.6. For other models, test in a low-risk channel first. Details → [Known Limitations](shared/A2A_PROTOCOL.md#7-已知限制)
 
-> Technical details → [A2A Protocol v2](shared/A2A_PROTOCOL.md) · [Core Concepts](docs/en/CONCEPTS.md#two-a2a-modes-delegation-and-discussion)
+> Technical details → [A2A Protocol v2](shared/A2A_PROTOCOL.md) · [Core Concepts](docs/en/CONCEPTS.md#4-a2a--native-agent-collaboration)
 
 ### Coming Next: Agent Blueprints — On-Demand Agent Onboarding
 
@@ -59,7 +59,7 @@ The author has onboarded ~10 new Agents through the OpenCrew framework for vario
 - [Architecture at a Glance](#architecture-at-a-glance)
 - [Get Started in 10 Minutes](#get-started-in-10-minutes)
 - [Core Concepts at a Glance](#core-concepts-at-a-glance)
-- [Enable A2A Closed-Loop](#enable-a2a-closed-loop)
+- [Enable Agent Collaboration](#enable-agent-collaboration)
 - [Documentation Guide](#documentation-guide)
 - [Stable vs Experimental](#stable-vs-experimental)
 - [FAQ](#faq)
@@ -250,7 +250,7 @@ OpenCrew runs on a few key mechanisms. Here's the 30-second overview — full de
 | **Delegation** | Dispatch specific tasks | `sessions_send` two-step trigger | Slack / Discord / Feishu |
 | **Discussion** | Multi-party discussion, review, negotiation | Independent Bot @mention conversation | Slack |
 
-Delegation is the foundation — CTO assigns work to Builder. Discussion is the enhancement — the Orchestrator walks into CTO's channel, and the two Agents discuss the approach while you watch. Details at → [A2A Protocol v2](shared/A2A_PROTOCOL.md)
+Delegation is the foundation -- CTO assigns work to Builder. Discussion is the enhancement -- the Orchestrator walks into CTO's channel, and the two Agents discuss the approach while you watch. Details at → [A2A Protocol v2](shared/A2A_PROTOCOL.md)
 
 **Three-Layer Knowledge Distillation** — How chat history becomes organizational assets
 
@@ -262,48 +262,75 @@ Layer 2: KO-distilled abstract knowledge (principles / patterns / lessons learne
 
 ---
 
-## Enable A2A Closed-Loop
+## Enable Agent Collaboration
 
-> After deployment, each Agent replying independently ≠ Agents collaborating with each other.
-> A2A (Agent-to-Agent) requires additional configuration. OpenCrew supports two modes:
+> After deployment, each Agent replying independently does not mean Agents can collaborate with each other.
+> A2A (Agent-to-Agent) requires additional configuration.
 
-### Delegation — Dispatch Tasks
+### Discussion Mode (Recommended) -- True Multi-Agent Collaboration
 
-You give CTO a dev task in `#cto` → CTO automatically dispatches to Builder in `#build` → Builder executes in rounds within the thread → each round's progress is visible in Slack → CTO reports back to `#cto`. **You only need to watch Slack.**
+Pick an Agent as the orchestrator, create an independent Slack App for it -> invite it into execution Agents' channels -> the two Agents collaborate directly in the channel.
 
-### Discussion — Multi-Agent Collaboration `NEW`
+**Setup in three steps** (human effort ~5 minutes, the rest is handled by agents):
 
-Pick an Agent as your orchestrator (e.g., CoS), create an independent Slack App for it → invite it into CTO's and Builder's channels → the orchestrator @mentions execution Agents to start a discussion → execution Agents respond → the orchestrator evaluates, asks follow-ups, or closes → **what you see is two Agents discussing a problem in Slack like colleagues.**
-
-> Why separate roles? Drawing from Anthropic Harness Design: an AI that both executes and self-reviews tends to be lenient on itself. The orchestrator focuses on planning and QC, execution Agents focus on doing the work — this is the key division that makes AI collaboration genuinely effective.
-
-### Let Your Agent Handle A2A Setup
-
-> ⚠️ **First-time setup note**: During the A2A setup flow, the Agent will check and update `openclaw.json` A2A settings (e.g. `agentToAgent.allow`, `maxPingPongTurns`). Config changes **automatically trigger an OpenClaw gateway restart**, which briefly interrupts all Agent sessions. This is a normal one-time setup step — after restart, Agents recover automatically and you just need to re-trigger the validation steps.
-
-Send this to any Agent (recommended: **Ops**, or **CTO** / **CoS**):
+1. **Create an independent Slack App**: [api.slack.com/apps](https://api.slack.com/apps) -> From manifest -> use the manifest in [A2A_SETUP_GUIDE.md](docs/en/A2A_SETUP_GUIDE.md)
+2. **Have your Agent configure multi-account** -- send the following to any Agent:
 
 ```
-Help me enable A2A closed-loop.
+Help me configure Discussion Mode.
 
-Reference: read docs/A2A_SETUP_GUIDE.md in the repo
+Reference: read docs/en/A2A_SETUP_GUIDE.md in the repo
+
+New Bot info:
+- Bot Token: <xoxb-new-bot>
+- App Token: <xapp-new-bot>
+- Account ID (identifier in openclaw.json): <your choice, e.g. coordinator>
+- Bind to which Agent: <your chosen agent id, e.g. cos>
+- Target channel: #cto (let the new bot collaborate with CTO)
+
+Follow the steps in A2A_SETUP_GUIDE.md to configure multi-account.
+You MUST also declare accounts.default (using existing tokens), otherwise the main bot will disconnect.
+Do not touch my models / auth / gateway config -- only make A2A-related changes.
+```
+
+3. **Invite the bot in the target channel**: `/invite @NewBotName`
+
+Verify: @mention the new bot in #cto -> new bot replies -> @mention CTO in the thread -> CTO also replies -> two Agents conversing in the same thread.
+
+> Full guide (with manifest, config templates, pitfall checklist, rollback) -> [Discussion Mode Setup Guide](docs/en/A2A_SETUP_GUIDE.md)
+
+### Delegation Mode -- One-Way Task Dispatch
+
+For scenarios that don't need Discussion, you can use the simpler Delegation mode: CTO dispatches to Builder in `#build` -> Builder executes in rounds -> CTO reports back to `#cto`. You only need to watch Slack.
+
+<details>
+<summary>Delegation Setup (no independent Slack App needed)</summary>
+
+Send the following to any Agent:
+
+```
+Help me set up A2A Delegation (legacy delegation mode).
+
+Reference: read shared/A2A_PROTOCOL.md Appendix C (legacy Delegation) in the repo
 
 Current state:
 - OpenCrew is deployed, each Agent replies normally in their channel
 - My Slack channels: #hq(CoS) #cto(CTO) #build(Builder)
 
-Follow the steps in A2A_SETUP_GUIDE.md:
-1. Check and complete A2A config in openclaw.json (agentToAgent.allow / maxPingPongTurns)
-2. Append A2A collaboration sections to CoS, CTO, and Builder's AGENTS.md (minimal increment, don't rewrite)
-3. First validate CoS→CTO closed-loop, then CTO→Builder closed-loop
+Follow the instructions in Appendix C:
+1. Check and complete Delegation config in openclaw.json (agentToAgent.allow / maxPingPongTurns)
+2. Append Delegation A2A sections to CoS, CTO, and Builder's AGENTS.md (minimal increment, don't rewrite)
+3. First validate CoS->CTO closed-loop, then CTO->Builder closed-loop
 4. Report results to me
 
-Do not touch my models / auth / gateway config — only make A2A-related changes.
+Do not touch my models / auth / gateway config -- only make A2A-related changes.
 ```
 
-### Manual setup?
+> First-time setup note: the Agent will update `openclaw.json` A2A settings, which triggers a gateway restart. All Agents briefly disconnect, then auto-recover.
 
-Full guide (with config examples and validation steps) → [A2A Setup Guide](docs/en/A2A_SETUP_GUIDE.md)
+</details>
+
+> Full comparison and technical details of both modes -> [A2A Protocol v2](shared/A2A_PROTOCOL.md)
 
 ---
 

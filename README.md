@@ -288,11 +288,12 @@ Layer 2: KO 提炼的抽象知识（原则 / 模式 / 踩坑记录）
 
 参考文档：请读仓库里的 docs/A2A_SETUP_GUIDE.md
 
-新 Bot 凭证（写入配置，不要回显）：
+新 Bot 信息：
 - Bot Token: <xoxb-新bot>
 - App Token: <xapp-新bot>
-
-目标频道：#cto（让新 bot 可以和 CTO 协作）
+- Account ID（在 openclaw.json 中的标识）: <你起的名字，如 coordinator>
+- 绑定到哪个 Agent: <你选定的 agent id，如 cos>
+- 目标频道: #cto（让新 bot 可以和 CTO 协作）
 
 请按 A2A_SETUP_GUIDE.md 的步骤配置多账号。
 ★ 必须同时声明 accounts.default（用现有 token），否则主 bot 会断连。
