@@ -279,13 +279,14 @@ Pick an Agent as the orchestrator, create an independent Slack App for it -> inv
 ```
 Help me configure Discussion Mode.
 
-Reference: read docs/A2A_SETUP_GUIDE.md in the repo
+Reference: read docs/en/A2A_SETUP_GUIDE.md in the repo
 
-New Bot credentials (write to config, do not echo back):
+New Bot info:
 - Bot Token: <xoxb-new-bot>
 - App Token: <xapp-new-bot>
-
-Target channel: #cto (let the new bot collaborate with CTO)
+- Account ID (identifier in openclaw.json): <your choice, e.g. coordinator>
+- Bind to which Agent: <your chosen agent id, e.g. cos>
+- Target channel: #cto (let the new bot collaborate with CTO)
 
 Follow the steps in A2A_SETUP_GUIDE.md to configure multi-account.
 You MUST also declare accounts.default (using existing tokens), otherwise the main bot will disconnect.
